@@ -19,6 +19,23 @@ class LiteratureDataset:
         """Load CSV as pandas DataFrame."""
         self.ensure_dataset()
         self.df = pd.read_csv(self.csv_path)
+
+        if "Approach Group" not in self.df.columns:
+            raise ValueError(
+                f"Required column 'Approach Group' is missing in CSV: {self.csv_path}"
+            )
+
+        self.df["Approach Group"] = (
+            self.df["Approach Group"].fillna("").astype(str).str.strip()
+        )
+
+        self.df["Approach Group"] = self.df["Approach Group"].apply(
+            lambda value: [part.strip() for part in value.split("/") if part.strip()]
+            if value
+            else [""]
+        )
+        self.df = self.df.explode("Approach Group", ignore_index=True)
+
         self.df["Category"] = self.df.apply(normalize_category, axis=1)
         return self.df
 

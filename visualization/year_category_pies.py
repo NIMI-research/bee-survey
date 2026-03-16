@@ -2,7 +2,7 @@ import math
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from const import CATEGORY_COLORS, FALLBACK_CATEGORY_COLOR, OUTPUT_DIR, YEAR_CATEGORY_PDF_PATH
+from const import CATEGORY_COLORS, FALLBACK_CATEGORY_COLOR, OUTPUT_DIR
 
 
 def plot_yearly_category_pies(df):
@@ -32,6 +32,7 @@ def plot_yearly_category_pies(df):
                 labels=subset["Category"],
                 values=subset["count"],
                 textinfo="percent",
+                textfont=dict(size=14),
                 marker=dict(colors=colors),
                 showlegend=True  # legend only once
             ),
@@ -41,9 +42,22 @@ def plot_yearly_category_pies(df):
 
     fig.update_layout(
         title="Category Distribution per Year",
-        height=300 * rows
+        template="plotly_white",
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+         height=300 * rows,          # expand graph height
+        width=1200,                 # expand width
+        legend=dict(
+            orientation="h",        # horizontal legend
+            y=-0.1,                 # move below plot
+            x=0.5,
+            xanchor="center",
+            yanchor="top",
+            font=dict(size=16)
+        ),
+        margin=dict(t=100, b=150)   # top & bottom margin
     )
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    fig.write_image(YEAR_CATEGORY_PDF_PATH)
-    fig.show()
+    #
+    fig.write_image(OUTPUT_DIR / "yearly_category_pies.pdf")

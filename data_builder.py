@@ -1,7 +1,12 @@
 import csv
+from importlib.resources import path
 import math
+from os import path
 import os
 import re
+
+# Example guide: could be loaded from Excel/CSV
+
 
 import openpyxl
 
@@ -14,6 +19,7 @@ SOURCE_SHEETS = [
     "Original",
     "original-2011-2023",
 ]
+GUIDE_SHEET = "Guides/Notes"
 
 OUTPUT_COLUMNS = [
     "Papers",
@@ -28,6 +34,13 @@ OUTPUT_COLUMNS = [
     "Approach (AI)",
     "Research Problem",
     "Category",
+]
+
+EXCLUDED_TITLE_PATTERNS = [
+    r"\ba\s+machine\s+learning\s+approach\s+to\s+forecasting\s+honey\s+production\s+with\s+tree\W*based\s+methods\b",
+    r"\bgraph\s+attention\s+convolutional\s+neural\s+network\s+model\s+for\s+chemical\s+poisoning\s+of\s+honey\s+bees(?:['’]|â€™)?\s+prediction\b",
+    r"\bpredicting\s+internal\s+conditions\s+of\s+beehives\s+using\s+precision\s+beekeeping\b",
+    r"\bhoneybee\s+in\W*out\s+monitoring\s+system\s+by\s+object\s+recognition\s+and\s+tracking\s+from\s+real\W*time\s+webcams\b",
 ]
 
 
@@ -86,6 +99,25 @@ def _text(value):
     return "" if value is None else str(value).strip()
 
 
+def _normalize_title_for_match(value):
+    normalized = _text(value).lower()
+    normalized = normalized.replace("â€™", "'").replace("’", "'")
+    normalized = re.sub(r"\s+", " ", normalized)
+    return normalized.strip()
+
+
+def _should_ignore_by_title(title):
+    normalized_title = _normalize_title_for_match(title)
+    if not normalized_title:
+        return False
+
+    for pattern in EXCLUDED_TITLE_PATTERNS:
+        if re.search(pattern, normalized_title, flags=re.IGNORECASE):
+            return True
+
+    return False
+
+
 def _should_ignore_by_pass_fail(value):
     decision = _text(value).lower()
     return decision in ("false", "f", "fail", "failed", "no", "n")
@@ -141,7 +173,6 @@ def _infer_category_from_problem(text):
             return category
 
     return ""
-import re
 
 def normalize_category(row):
     """
@@ -172,8 +203,6 @@ def _find_column_index(headers, candidates):
         if candidate_key in normalized:
             return normalized[candidate_key]
     return None
-
-
 def build_main_csv(
     input_path=SOURCE_WORKBOOK_PATH,
     output_path=MAIN_CSV_PATH,
@@ -242,6 +271,9 @@ def build_main_csv(
                 continue
 
             row["Papers"] = _text(row["Papers"])
+            if _should_ignore_by_title(row["Papers"]):
+                continue
+
             row["Authors"] = _text(row["Authors"])
             if not row["Authors"]:
                 continue
