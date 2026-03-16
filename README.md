@@ -10,6 +10,7 @@ This project provides tools to load, analyze, and visualize literature survey da
 
 ## Setup
 Project Structure:
+```
 bee-survey/
 ├── main.py
 ├── data_loader.py
@@ -18,7 +19,7 @@ bee-survey/
 ├──── (<Bee-Me Literature Reviewcsv>)
 ├── output/
 └───── visualizations/
-
+```
 
 
 ### Using Conda
