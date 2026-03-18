@@ -14,20 +14,20 @@ def _hex_to_rgba(hex_color, alpha):
 
 def plot_category_approach_sankey(df):
 
-    counts = df.groupby(["Category", "Approach Group"]).size().reset_index(name="Count")
+    counts = df.groupby(["Subcategory (ai task)", "Approach group"]).size().reset_index(name="count")
 
-    categories = list(df["Category"].unique())
-    approaches = list(df["Approach Group"].unique())
+    categories = list(df["Subcategory (ai task)"].unique())
+    approaches = list(df["Approach group"].unique())
 
     labels = categories + approaches
     category_node_colors = [CATEGORY_COLORS.get(category, FALLBACK_CATEGORY_COLOR) for category in categories]
     approach_node_colors = ["#D9D9D9"] * len(approaches)
     node_colors = category_node_colors + approach_node_colors
 
-    source = counts["Category"].apply(lambda x: categories.index(x))
-    target = counts["Approach Group"].apply(lambda x: approaches.index(x) + len(categories))
-    value = counts["Count"]
-    link_colors = counts["Category"].apply(
+    source = counts["Subcategory (ai task)"].apply(lambda x: categories.index(x))
+    target = counts["Approach group"].apply(lambda x: approaches.index(x) + len(categories))
+    value = counts["count"]
+    link_colors = counts["Subcategory (ai task)"].apply(
         lambda category: _hex_to_rgba(CATEGORY_COLORS.get(category, FALLBACK_CATEGORY_COLOR), 0.35)
     )
 

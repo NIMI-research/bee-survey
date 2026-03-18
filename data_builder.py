@@ -36,14 +36,6 @@ OUTPUT_COLUMNS = [
     "Category",
 ]
 
-EXCLUDED_TITLE_PATTERNS = [
-    r"\ba\s+machine\s+learning\s+approach\s+to\s+forecasting\s+honey\s+production\s+with\s+tree\W*based\s+methods\b",
-    r"\bgraph\s+attention\s+convolutional\s+neural\s+network\s+model\s+for\s+chemical\s+poisoning\s+of\s+honey\s+bees(?:['’]|â€™)?\s+prediction\b",
-    r"\bpredicting\s+internal\s+conditions\s+of\s+beehives\s+using\s+precision\s+beekeeping\b",
-    r"\bhoneybee\s+in\W*out\s+monitoring\s+system\s+by\s+object\s+recognition\s+and\s+tracking\s+from\s+real\W*time\s+webcams\b",
-]
-
-
 def _normalize_header(name):
     if name is None:
         return ""
@@ -97,43 +89,6 @@ def _coerce_year_for_output(value):
 
 def _text(value):
     return "" if value is None else str(value).strip()
-
-
-def _normalize_title_for_match(value):
-    normalized = _text(value).lower()
-    normalized = normalized.replace("â€™", "'").replace("’", "'")
-    normalized = re.sub(r"\s+", " ", normalized)
-    return normalized.strip()
-
-
-def _should_ignore_by_title(title):
-    normalized_title = _normalize_title_for_match(title)
-    if not normalized_title:
-        return False
-
-    for pattern in EXCLUDED_TITLE_PATTERNS:
-        if re.search(pattern, normalized_title, flags=re.IGNORECASE):
-            return True
-
-    return False
-
-
-def _should_ignore_by_pass_fail(value):
-    decision = _text(value).lower()
-    return decision in ("false", "f", "fail", "failed", "no", "n")
-
-
-def _normalize_pass_fail(value):
-    decision = _text(value)
-    lowered = decision.lower()
-    if lowered == "pass":
-        return "Pass"
-    if lowered == "fail":
-        return "Fail"
-    if lowered in ("", "-"):
-        return decision
-    return decision
-
 
 def _extract_venue_name(raw_value, paper_text=""):
     venue_text = _text(raw_value)
@@ -270,9 +225,9 @@ def build_main_csv(
             if not row_has_values:
                 continue
 
-            row["Papers"] = _text(row["Papers"])
-            if _should_ignore_by_title(row["Papers"]):
-                continue
+            # row["Papers"] = _text(row["Papers"])
+            # if _should_ignore_by_title(row["Papers"]):
+            #     continue
 
             row["Authors"] = _text(row["Authors"])
             if not row["Authors"]:
@@ -286,13 +241,15 @@ def build_main_csv(
             row["Research Problem"] = _text(row["Research Problem"])
             row["Category"] = _text(row["Category"])
 
-            if _should_ignore_by_pass_fail(row["Pass/Fail"]):
-                continue
+            # if _should_ignore_by_pass_fail(row["Pass/Fail"]):
+            #     continue
 
-            row["Pass/Fail"] = _normalize_pass_fail(row["Pass/Fail"])
+            #row["Pass/Fail"] = _normalize_pass_fail(row["Pass/Fail"])
             row["Venue Name"] = _extract_venue_name(row["Venue Name"], row["Papers"])
 
-            if not row["Category"]:
+            if row["Category"]:
+                row["Category"] = normalize_category(row)
+            else:
                 inferred = _infer_category_from_problem(row["Research Problem"])
                 if inferred:
                     row["Category"] = inferred

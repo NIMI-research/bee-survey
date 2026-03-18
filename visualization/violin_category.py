@@ -9,15 +9,15 @@ def plot_category_violin(df):
     Create a violin plot showing the distribution of publications per category over the years.
     df: DataFrame with columns ["Year", "Category"]
     """
-    # Count publications per year per category
-    counts = df.groupby(["Year", "Category"]).size().reset_index(name="count")
+    # count publications per year per category
+    counts = df.groupby(["Year", "Subcategory (ai task)"]).size().reset_index(name="count")
 
     # Create violin plot
     fig = px.violin(
         counts,
-        x="Category",
+        x="Subcategory (ai task)",
         y="Year",
-        color="Category",
+        color="Subcategory (ai task)",
         color_discrete_map=CATEGORY_COLORS,
         points="all",  # show individual points
         box=True,      # show box inside violin
@@ -28,7 +28,7 @@ def plot_category_violin(df):
         template="plotly_white",
         paper_bgcolor="white",
         plot_bgcolor="white",
-        xaxis_title="Category",
+        xaxis_title="Subcategory (ai task)",
         yaxis_title="Year",
         showlegend=False,
         height=600,

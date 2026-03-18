@@ -7,7 +7,7 @@ from const import CATEGORY_COLORS, FALLBACK_CATEGORY_COLOR, OUTPUT_DIR
 
 def plot_yearly_category_pies(df):
 
-    data = df.groupby(["Year", "Category"]).size().reset_index(name="count")
+    data = df.groupby(["Year", "Subcategory (ai task)"]).size().reset_index(name="count")
     years = sorted(data["Year"].unique())
 
     cols = 5
@@ -22,14 +22,14 @@ def plot_yearly_category_pies(df):
 
     for i, year in enumerate(years):
         subset = data[data["Year"] == year]
-        colors = [CATEGORY_COLORS.get(cat, FALLBACK_CATEGORY_COLOR) for cat in subset["Category"]]
+        colors = [CATEGORY_COLORS.get(cat, FALLBACK_CATEGORY_COLOR) for cat in subset["Subcategory (ai task)"]]
 
         row = i // cols + 1
         col = i % cols + 1
 
         fig.add_trace(
             go.Pie(
-                labels=subset["Category"],
+                labels=subset["Subcategory (ai task)"],
                 values=subset["count"],
                 textinfo="percent",
                 textfont=dict(size=14),

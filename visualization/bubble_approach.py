@@ -3,26 +3,26 @@ from const import OUTPUT_DIR, CATEGORY_COLORS, FALLBACK_CATEGORY_COLOR
 
 def plot_category_approach_bubble(df):
 
-    counts = df.groupby(["Category", "Approach Group"]).size().reset_index(name="Count")
+    counts = df.groupby(["Subcategory (ai task)", "Approach group"]).size().reset_index(name="count")
     category_color_map = {
         category: CATEGORY_COLORS.get(category, FALLBACK_CATEGORY_COLOR)
-        for category in counts["Category"].unique()
+        for category in counts["Subcategory (ai task)"].unique()
     }
 
     fig = px.scatter(
         counts,
-        x="Category",
-        y="Approach Group",
-        size="Count",
+        x="Subcategory (ai task)",
+        y="Approach group",
+        size="count",
         size_max=50,
-        color="Category",
+        color="Subcategory (ai task)",
         color_discrete_map=category_color_map,
     )
 
     fig.update_layout(
         template="plotly_white",
         height=600,
-        width=1000,
+        width=1200,
         showlegend=False,
     )
 
