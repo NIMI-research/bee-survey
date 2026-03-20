@@ -51,6 +51,6 @@ def plot_category_approach_sankey(df):
         height=600,
         width=1000
     )
+    fig.write_image(OUTPUT_DIR / "category_approach_sankey.pdf")
 
     
-    fig.write_image(OUTPUT_DIR / "category_approach_sankey.pdf")

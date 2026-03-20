@@ -97,10 +97,12 @@ def _filter_allowed_subcategories(df, column_name):
     normalized = raw_values.map(_subcategory_match_key)
     has_bracket_prefix = raw_values.str.match(r"^\s*\[[^\]]+\]\s*", na=False)
     has_survey_text = raw_values.str.contains(r"\bsurvey\b", case=False, na=False)
+    has_out_of_scope = raw_values.str.contains(r"\bout\s*of\s*scope\b", case=False, na=False)
     return df[
         normalized.isin(ALLOWED_SUBCATEGORY_PATTERNS)
         & ~has_bracket_prefix
         & ~has_survey_text
+        & ~has_out_of_scope
     ].copy()
 
 

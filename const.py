@@ -17,3 +17,19 @@ CATEGORY_COLORS = {
 }
 
 FALLBACK_CATEGORY_COLOR = "#7f7f7f"
+
+SECONDARY_PALETTE = [
+    "#78350F",  # espresso
+    "#A16207",  # olive gold
+    "#B45309",  # deep amber
+    "#D97706",  # warm gold
+    "#F59E0B",  # honey yellow
+    "#FBBF24",  # bright amber
+    "#FCD34D",  # soft golden
+    "#FDE68A",  # pale honey
+    "#DAB308",  # golden
+    "#A16207",  # olive gold
+    "#B7791F",  # toasted amber
+]
+
+
