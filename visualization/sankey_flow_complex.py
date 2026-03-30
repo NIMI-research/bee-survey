@@ -1,3 +1,4 @@
+import re
 import plotly.graph_objects as go
 from const import OUTPUT_DIR, CATEGORY_COLORS, FALLBACK_CATEGORY_COLOR, SECONDARY_PALETTE
 import pandas as pd
@@ -54,7 +55,42 @@ def _prepare_modality_approach_category(df):
         text = series.fillna("").astype(str).str.strip()
         return text.eq("") | text.str.fullmatch(r"-+", na=False)
 
-    df["Data Modality"] = df[modality_col].fillna("").astype(str).str.split().str[0].str.lower()
+
+    def extract_modality(val):
+        val = str(val).strip()
+        first_word = val.split()[0].lower() if val.split() else ""
+        
+        if first_word in ("multimodal", "other"):
+            matches = re.findall(r'\(([^()]*)\)', val)
+            inner = matches[-1].strip() if matches else ""
+            if inner:
+                parts = re.split(r'[/,+]', inner)
+                cleaned_parts = []
+                for p in parts:
+                    part = p.strip()
+                    if not part:
+                        continue
+                    part = re.sub(r"\s*-\s*.*$", "", part).strip()
+                    part = re.sub(r"^(multimodal|other)\s*", "", part, flags=re.IGNORECASE).strip(" -")
+                    if part:
+                        cleaned_parts.append(part.title())
+
+                deduped = []
+                seen = set()
+                for part in cleaned_parts:
+                    key = part.lower()
+                    if key not in seen:
+                        seen.add(key)
+                        deduped.append(part)
+
+                if deduped:
+                    return ", ".join(deduped[:3])
+            return first_word.title()
+        else:
+            return first_word.title()
+
+
+    df["Data Modality"] = df[modality_col].fillna("").apply(extract_modality)
     df["Approach group"] = df[approach_col].fillna("").astype(str).str.strip()
     df["Category section"] = df[category_col].apply(extract_category_section)
 
@@ -127,10 +163,12 @@ def plot_modality_approach_category_sankey(df):
 
     fig.update_layout(
         template="plotly_white",
+        title="Data Modality → Approach → Category Flow",
         height=600,
         width=1000
     )
 
     fig.write_image(OUTPUT_DIR / "modality_approach_category_sankey.pdf")
+    fig.write_image(OUTPUT_DIR / "modality_approach_category_sankey.png")
 
 

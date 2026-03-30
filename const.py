@@ -9,6 +9,7 @@ SOURCE_WORKBOOK_PATH = INPUT_DIR / "Bee-Me Literature Review.xlsx"
 MAIN_CSV_PATH = INPUT_DIR / "Bee-Me Literature Review_Main.csv"
 VISUALIZATION_CSV_PATH = INPUT_DIR / "Visualization.csv"
 
+
 CATEGORY_COLORS = {
     "Tracking & Pose Estimation": "#6D4C41",
     "Detection": "#A1887F",

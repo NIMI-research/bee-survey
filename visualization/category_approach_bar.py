@@ -24,13 +24,16 @@ def count_approach_over_category(df):
     # Clean columns
     df["Category (section)"] = df["Category (section)"].fillna("other").replace("", "other")
     df["Category (section)"] = df["Category (section)"].map(lambda x: _clip_category_text(x))
-    df["Approach group"] = df["Approach group"].fillna("other").replace("", "other")
+    df["Approach group"] = df["Approach group"].fillna("").astype(str).str.strip()
+    df = df[df["Approach group"].ne("") & df["Approach group"].ne("-")]
+    if df.empty:
+        return
 
     # Aggregate counts
     data = df.groupby(["Category (section)", "Approach group"]).size().reset_index(name="count")
 
     categories = sorted(data["Category (section)"].unique())
-    approaches = list(df["Approach group"].unique())
+    approaches = list(data["Approach group"].unique())
 
     fig = go.Figure()
 
@@ -56,10 +59,11 @@ def count_approach_over_category(df):
     fig.update_layout(
         barmode="stack",
         template="plotly_white",
+        title="Approaches for Tackling Categories of Researach Problems",
         paper_bgcolor="white",
         plot_bgcolor="white",
-        height=800,
-        width=1200,
+        height=1000,
+        width=1500,
         xaxis=dict(
             tickangle=30,
             showgrid=True,
@@ -90,3 +94,4 @@ def count_approach_over_category(df):
     )
 
     fig.write_image(OUTPUT_DIR / "count_approach_over_category.pdf")
+    fig.write_image(OUTPUT_DIR / "count_approach_over_category.png")

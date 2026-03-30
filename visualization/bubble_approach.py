@@ -21,10 +21,18 @@ def plot_category_approach_bubble(df):
 
     fig.update_layout(
         template="plotly_white",
+        title="Category vs Approach Distribution",
         height=600,
         width=1200,
         showlegend=False,
+        # legend=dict(
+        #     yanchor="top",
+        #     y=0.99,
+        #     xanchor="right",
+        #     x=0.99
+        # )
     )
 
     
     fig.write_image(OUTPUT_DIR / "category_approach_bubble.pdf")
+    fig.write_image(OUTPUT_DIR / "category_approach_bubble.png")

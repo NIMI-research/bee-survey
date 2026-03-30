@@ -206,3 +206,4 @@ def plot_category_approach_hierarchy(df):
         title="Category → Subcategory → Approach (Tree)"
     )
     tree_fig.write_image(OUTPUT_DIR / "category_approach_tree.pdf")
+    tree_fig.write_image(OUTPUT_DIR / "category_approach_tree.png")

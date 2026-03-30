@@ -61,3 +61,4 @@ def plot_yearly_category_pies(df):
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     #
     fig.write_image(OUTPUT_DIR / "yearly_category_pies.pdf")
+    fig.write_image(OUTPUT_DIR / "yearly_category_pies.png")

@@ -154,11 +154,14 @@ def plot_keyword_wordcloud(
     ax.axis("off")
     fig.patch.set_facecolor(background_color)
     ax.set_facecolor(background_color)
-    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+    fig.suptitle("Search Keywords Word Cloud", fontsize=24, weight="bold", y=0.98)
+    plt.subplots_adjust(left=0, right=1, top=0.95, bottom=0)
 
     # 6. Save --------------------------------------------------------------
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     out_path = OUTPUT_DIR / f"{output_name}.pdf"
+    out_path_png = OUTPUT_DIR / f"{output_name}.png"
     fig.savefig(out_path, bbox_inches="tight", pad_inches=0.1, facecolor=background_color)
+    fig.savefig(out_path_png, bbox_inches="tight", pad_inches=0.1, facecolor=background_color)
     plt.close(fig)
     print(f"[wordcloud] Saved → {out_path}")
