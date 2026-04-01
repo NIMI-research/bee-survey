@@ -3,6 +3,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from const import CATEGORY_COLORS, FALLBACK_CATEGORY_COLOR, OUTPUT_DIR
+from utils import apply_legend_border, save_with_plot_border
 
 
 def plot_yearly_category_pies(df):
@@ -57,8 +58,10 @@ def plot_yearly_category_pies(df):
         ),
         margin=dict(t=100, b=150)   # top & bottom margin
     )
-
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    #
-    fig.write_image(OUTPUT_DIR / "yearly_category_pies.pdf")
-    fig.write_image(OUTPUT_DIR / "yearly_category_pies.png")
+    apply_legend_border(fig)
+    save_with_plot_border(
+        fig,
+        png_path=OUTPUT_DIR / "yearly_category_pies.png",
+        pdf_path=OUTPUT_DIR / "yearly_category_pies.pdf",
+    )

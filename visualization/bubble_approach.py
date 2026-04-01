@@ -1,5 +1,6 @@
 import plotly.express as px
 from const import OUTPUT_DIR, CATEGORY_COLORS, FALLBACK_CATEGORY_COLOR
+from utils import apply_legend_border, save_with_plot_border
 
 def plot_category_approach_bubble(df):
 
@@ -17,6 +18,7 @@ def plot_category_approach_bubble(df):
         size_max=50,
         color="Subcategory (ai task)",
         color_discrete_map=category_color_map,
+
     )
 
     fig.update_layout(
@@ -25,14 +27,12 @@ def plot_category_approach_bubble(df):
         height=600,
         width=1200,
         showlegend=False,
-        # legend=dict(
-        #     yanchor="top",
-        #     y=0.99,
-        #     xanchor="right",
-        #     x=0.99
-        # )
+        xaxis=dict(linecolor="#696969", showgrid=False),
+        yaxis=dict(linecolor="#696969", showgrid=False),
     )
-
-    
-    fig.write_image(OUTPUT_DIR / "category_approach_bubble.pdf")
-    fig.write_image(OUTPUT_DIR / "category_approach_bubble.png")
+    apply_legend_border(fig)
+    save_with_plot_border(
+        fig,
+        png_path=OUTPUT_DIR / "category_approach_bubble.png",
+        pdf_path=OUTPUT_DIR / "category_approach_bubble.pdf",
+    )

@@ -2,6 +2,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from const import CATEGORY_COLORS, FALLBACK_CATEGORY_COLOR, OUTPUT_DIR
+from utils import apply_legend_border, save_with_plot_border
 
 
 def count_category_over_years(df):
@@ -25,12 +26,12 @@ def count_category_over_years(df):
                 y=cat_data,
                 mode="lines",
                 stackgroup="one",
-                opacity=0.9,
+                opacity=0.85,
                 name=cat,
                 line=dict(
                     color=CATEGORY_COLORS.get(cat, FALLBACK_CATEGORY_COLOR),
                     shape="spline",
-                    smoothing=0.25,
+                    smoothing=0.5,
                 )
             )
         )
@@ -38,20 +39,29 @@ def count_category_over_years(df):
     fig.update_layout(
         template="plotly_white",
         title="Category Distribution over Years",
+        font=dict(size=28),
         paper_bgcolor="white",
         plot_bgcolor="white",
         height=800,
         width=1200,
         xaxis=dict(
             title="Year",
+            linecolor="#696969",
             tickmode="linear",
             dtick=1,
+            showgrid=False,
+            title_font=dict(size=20),
+            tickfont=dict(size=16),
         ),
         yaxis=dict(
             title="Count",
+            linecolor="#696969",
             tickmode="linear",
             dtick=2,
             tickformat="d",
+            showgrid=False,
+            title_font=dict(size=20),
+            tickfont=dict(size=16),
         ),
         legend=dict(
             orientation="h",
@@ -59,11 +69,14 @@ def count_category_over_years(df):
             x=0.5,
             xanchor="center",
             yanchor="top",
-            font=dict(size=16)
+            font=dict(size=14),
         ),
         margin=dict(t=100, b=150)
     )
-
-    fig.write_image(OUTPUT_DIR / "count_category_over_years.pdf")
-    fig.write_image(OUTPUT_DIR / "count_category_over_years.png")
+    apply_legend_border(fig)
+    save_with_plot_border(
+        fig,
+        png_path=OUTPUT_DIR / "count_category_over_years.png",
+        pdf_path=OUTPUT_DIR / "count_category_over_years.pdf",
+    )
 

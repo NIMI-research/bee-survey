@@ -82,6 +82,8 @@ ISO_ALIAS_TO_CODE = {
     "U.K.": "GBR",
     "United Kingdom": "GBR",
     "Great Britain": "GBR",
+    "Turkey": "TUR",
+    "Türkiye": "TUR",
 }
 
 ISO_DISPLAY_OVERRIDES = {
@@ -271,9 +273,16 @@ def _load_iso_lookup():
             if not name or not alpha3:
                 continue
 
+            # Soft aliases from official ISO names, e.g.:
+            # "Taiwan, Province of China" -> "Taiwan"
+            name_before_comma = _normalize_text(name.split(",", 1)[0])
+            name_before_paren = _normalize_text(name.split("(", 1)[0])
+
             code_to_country[alpha3] = name
             for key in {
                 _normalize_geo_key(name),
+                _normalize_geo_key(name_before_comma),
+                _normalize_geo_key(name_before_paren),
                 _normalize_geo_key(alpha2),
                 _normalize_geo_key(alpha3),
             }:
@@ -307,6 +316,17 @@ def _resolve_country_iso_from_text(value, lookup, code_to_country):
 
     for key in candidate_keys:
         alpha3 = lookup.get(key)
+        if alpha3:
+            return code_to_country.get(alpha3, ""), alpha3
+
+    # Soft mapping: if any word token matches an ISO code/alias key, map it.
+    # Example: "collected in USA region" -> USA.
+    word_tokens = re.findall(r"[A-Za-z0-9]+", cleaned)
+    for token in word_tokens:
+        token_key = _normalize_geo_key(token)
+        if not token_key:
+            continue
+        alpha3 = lookup.get(token_key)
         if alpha3:
             return code_to_country.get(alpha3, ""), alpha3
 

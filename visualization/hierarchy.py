@@ -1,6 +1,7 @@
 import plotly.graph_objects as go
 import math
 from const import OUTPUT_DIR, CATEGORY_COLORS, FALLBACK_CATEGORY_COLOR, SECONDARY_PALETTE
+from utils import apply_legend_border, save_with_plot_border
 
 
 MIN_FONT_SIZE = 12
@@ -205,5 +206,9 @@ def plot_category_approach_hierarchy(df):
         uniformtext=dict(minsize=MIN_FONT_SIZE),
         title="Category → Subcategory → Approach (Tree)"
     )
-    tree_fig.write_image(OUTPUT_DIR / "category_approach_tree.pdf")
-    tree_fig.write_image(OUTPUT_DIR / "category_approach_tree.png")
+    apply_legend_border(tree_fig)
+    save_with_plot_border(
+        tree_fig,
+        png_path=OUTPUT_DIR / "category_approach_tree.png",
+        pdf_path=OUTPUT_DIR / "category_approach_tree.pdf",
+    )

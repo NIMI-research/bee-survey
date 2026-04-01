@@ -2,17 +2,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from const import SECONDARY_PALETTE, FALLBACK_CATEGORY_COLOR, INPUT_DIR, OUTPUT_DIR
-
-
-def _clip_category_text(text, max_words=5):
-    if not text:
-        return text
-    if "—" in text:
-        text = text.split("—", 1)[0].strip()
-    words = str(text).split()
-    if len(words) > max_words:
-        return " ".join(words[:max_words])
-    return text
+from utils import apply_legend_border, save_with_plot_border
 
 
 def plot_bar_bee_demographic(df):
@@ -31,14 +21,18 @@ def plot_bar_bee_demographic(df):
     if df.empty:
         return
 
-    df["research_country"] = df["research_country"].map(lambda x: _clip_category_text(x))
-
     data = (
         df.groupby("research_country")
         .size()
         .reset_index(name="count")
         .sort_values("count", ascending=False)
     )
+    total_papers = int(data["count"].sum())
+    ordered_countries = data["research_country"].tolist()
+    display_countries = [
+        country.split(",", 1)[0].strip() if "," in country else country
+        for country in ordered_countries
+    ]
 
     n_rows = len(data)
 
@@ -77,7 +71,10 @@ def plot_bar_bee_demographic(df):
     )
 
     fig.update_layout(
-        title="Countries Where AI Bee Research Is Conducted (Ranked by Paper Count)",
+        title=(
+            "Countries Where AI Bee Research Is Conducted (Ranked by Paper Count)"
+            f"<br><sup>Total Papers: {total_papers}</sup>"
+        ),
         template="plotly_white",
         height=700,
         width=1100,
@@ -87,22 +84,20 @@ def plot_bar_bee_demographic(df):
             tickformat="d",
             tick0=0,
             dtick=2,
-            showline=True,
-            linewidth=2,
-            linecolor="#696969",
-            showgrid=True,
-            gridcolor="rgba(0,0,0,0.18)",
-            gridwidth=1,
-            zeroline=True,
-            zerolinecolor="rgba(0,0,0,0.25)",
+            showgrid=False,
+            zeroline=False,
         ),
         yaxis=dict(
             categoryorder="array",
-            categoryarray=data["research_country"],
+            categoryarray=ordered_countries,
             autorange="reversed",
             showgrid=False,          # ← removed horizontal grid lines
             ticklabelstandoff=12,    # ← gap between y-tick labels and the axis/bars
             domain=[0.0, 0.94],
+            tickmode="array",
+            tickvals=ordered_countries,
+            ticktext=display_countries,
+            automargin=True,
         ),
         margin=dict(l=240, r=80, t=110, b=60),   # wider l for the standoff gap
         uniformtext=dict(mode="hide", minsize=10),
@@ -115,6 +110,9 @@ def plot_bar_bee_demographic(df):
         textfont=dict(size=12, color="#4a2c0a", style="italic"),
         hovertemplate="Country: %{y}<br>Count: %{x}<extra></extra>",
     )
-
-    fig.write_image(OUTPUT_DIR / "bar_bee_demographic.pdf")
-    fig.write_image(OUTPUT_DIR / "bar_bee_demographic.png")
+    apply_legend_border(fig)
+    save_with_plot_border(
+        fig,
+        png_path=OUTPUT_DIR / "bar_bee_demographic.png",
+        pdf_path=OUTPUT_DIR / "bar_bee_demographic.pdf",
+    )
