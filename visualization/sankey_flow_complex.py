@@ -2,6 +2,7 @@ import re
 import plotly.graph_objects as go
 from const import OUTPUT_DIR, CATEGORY_COLORS, FALLBACK_CATEGORY_COLOR, SECONDARY_PALETTE
 import pandas as pd
+from utils import apply_legend_border, save_with_plot_border
 
 
 MIDDLE_LINK_SCALE = 1.35
@@ -167,8 +168,11 @@ def plot_modality_approach_category_sankey(df):
         height=600,
         width=1000
     )
-
-    fig.write_image(OUTPUT_DIR / "modality_approach_category_sankey.pdf")
-    fig.write_image(OUTPUT_DIR / "modality_approach_category_sankey.png")
+    apply_legend_border(fig)
+    save_with_plot_border(
+        fig,
+        png_path=OUTPUT_DIR / "modality_approach_category_sankey.png",
+        pdf_path=OUTPUT_DIR / "modality_approach_category_sankey.pdf",
+    )
 
 

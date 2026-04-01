@@ -8,11 +8,12 @@ from visualization.word_cloud_search import plot_keyword_wordcloud
 from visualization.sankey_flow_complex import plot_modality_approach_category_sankey
 from visualization.hierarchy import plot_category_approach_hierarchy
 from visualization.count_category_over_years import count_category_over_years
-from visualization.category_approach_bar import count_approach_over_category
-from visualization.bee_demographic import plot_choropleth_country
+from visualization.stacked_category_approach import count_approach_over_category
+from visualization.choloropleth_bee import plot_choropleth_country
+from visualization.ridge_category_years import ridge_plot_approaches_over_years
 from visualization.bee_demographic_bar import plot_bar_bee_demographic
-from visualization.demographic_relations import plot_circular_migration_bee_research
-# Configure logging
+from visualization.demographic_migrations import plot_circular_migration_bee_research
+####Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -36,7 +37,7 @@ def main():
     plot_modality_approach_category_sankey(df)
     logger.info("Generating: Category Approach Hierarchy")
     plot_category_approach_hierarchy(df)
-    logger.info("Generating: Count Approach Over category")
+    logger.info("Generating: Stacked Approach Over category")
     count_approach_over_category(df)
     logger.info("Generating: Choropleth Country")
     plot_choropleth_country(df)
@@ -44,8 +45,8 @@ def main():
     plot_bar_bee_demographic(df)
     logger.info("Generating: Circular Migration - Bee to Research")
     plot_circular_migration_bee_research(df)
-   
-    logger.info("All plots completed successfully")
+    logger.info("Generating: Ridge Plot - Approaches Over Years")
+    ridge_plot_approaches_over_years(df)
 
 if __name__ == "__main__":
     main()

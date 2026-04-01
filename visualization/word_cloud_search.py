@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 from wordcloud import WordCloud
 
 from const import OUTPUT_DIR, SECONDARY_PALETTE
+from utils import save_with_plot_border
 
 
 # ---------------------------------------------------------------------------
@@ -161,7 +162,14 @@ def plot_keyword_wordcloud(
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     out_path = OUTPUT_DIR / f"{output_name}.pdf"
     out_path_png = OUTPUT_DIR / f"{output_name}.png"
-    fig.savefig(out_path, bbox_inches="tight", pad_inches=0.1, facecolor=background_color)
-    fig.savefig(out_path_png, bbox_inches="tight", pad_inches=0.1, facecolor=background_color)
+    save_with_plot_border(
+        fig,
+        png_path=out_path_png,
+        pdf_path=out_path,
+        facecolor=background_color,
+        dpi=300,
+        bbox_inches="tight",
+        pad_inches=0.1,
+    )
     plt.close(fig)
     print(f"[wordcloud] Saved → {out_path}")
