@@ -20,7 +20,8 @@ def ridge_plot_approaches_over_years(df):
     df = df.copy()
 
     # Clean columns
-    df["Approach group"] = df["Approach group"].fillna("other").replace("", "other")
+    df = df.dropna(subset=["Approach group"])
+    df["Approach group"] = df["Approach group"].astype(str).str.strip()
     df["Approach group"] = df["Approach group"].map(lambda x: _clip_approach_text(x))
     df["Year"] = pd.to_numeric(df["Year"], errors="coerce")
     df = df.dropna(subset=["Year"])
@@ -32,8 +33,14 @@ def ridge_plot_approaches_over_years(df):
     # Aggregate counts per approach per year
     data = df.groupby(["Approach group", "Year"]).size().reset_index(name="count")
 
-    approaches = sorted(data["Approach group"].unique())
     years = sorted(data["Year"].unique())
+
+    approach_order = (
+        data.groupby("Approach group", as_index=False)
+        .agg(latest_year=("Year", "max"))
+        .sort_values(["latest_year", "Approach group"], ascending=[False, True])
+    )
+    approaches = approach_order["Approach group"].tolist()
 
     n_approaches = len(approaches)
     spacing = 1.0  # vertical spacing between ridges
@@ -84,35 +91,34 @@ def ridge_plot_approaches_over_years(df):
     # Y-axis tick labels centered on each ridge
     fig.update_layout(
         template="plotly_white",
-        title="Distribution of Approaches Over Years",
+        title=dict(
+            text="<b>Distribution of Approaches Over Years</b>",
+            font=dict(size=28, family="Arial Black"),
+        ),
         paper_bgcolor="white",
         plot_bgcolor="white",
-        height=200 + n_approaches * 80,
-        width=1400,
+        height=200 + n_approaches * 60,
+        width=1500,
         xaxis=dict(
-            title="Year",
+            # title="<b>Year</b>",
             showgrid=False,
-            tickfont=dict(size=14),
+            tickfont=dict(size=18, family="Arial Black"),
             tickmode="array",
             tickvals=years,
             ticktext=[str(y) for y in years],
         ),
         yaxis=dict(
+            # title="<b>Approach Group</b>",
+            autorange="min",
             tickmode="array",
             tickvals=[i * spacing + spacing * 0.4 for i in range(n_approaches)],
             ticktext=approaches,
             showgrid=False,
-            tickfont=dict(size=13),
+            ticklabelstandoff=18,
+            tickfont=dict(size=18, family="Arial Black"),
         ),
-        legend=dict(
-            orientation="h",
-            y=-0.15,
-            x=0.5,
-            xanchor="center",
-            yanchor="top",
-            font=dict(size=14),
-        ),
-        margin=dict(t=100, b=180, l=200, r=50),
+        showlegend=False,
+        margin=dict(t=100, b=80, l=200, r=50),
         xaxis_showline=True,
         xaxis_linewidth=2,
         xaxis_linecolor="black",

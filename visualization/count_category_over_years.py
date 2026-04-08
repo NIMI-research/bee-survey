@@ -31,52 +31,53 @@ def count_category_over_years(df):
                 line=dict(
                     color=CATEGORY_COLORS.get(cat, FALLBACK_CATEGORY_COLOR),
                     shape="spline",
-                    smoothing=0.5,
+                    smoothing=0.65,
                 )
             )
         )
 
     fig.update_layout(
         template="plotly_white",
-        title="Category Distribution over Years",
-        font=dict(size=28),
+        title="Distribution of Categories over Years",
+        font=dict(size=18),
         paper_bgcolor="white",
         plot_bgcolor="white",
-        height=800,
-        width=1200,
+        height=600,
+        width=800,
         xaxis=dict(
-            title="Year",
+            #title="Year",
             linecolor="#696969",
+            linewidth=3,
+            showline=True,
             tickmode="linear",
             dtick=1,
             showgrid=False,
-            title_font=dict(size=20),
-            tickfont=dict(size=16),
+            tickfont=dict(size=12, family="Arial Black"),
         ),
         yaxis=dict(
-            title="Count",
+            #title="Count",
             linecolor="#696969",
+            linewidth=3,
+            showline=True,
             tickmode="linear",
             dtick=2,
             tickformat="d",
             showgrid=False,
-            title_font=dict(size=20),
-            tickfont=dict(size=16),
+            tickfont=dict(size=12, family="Arial Black"),
         ),
         legend=dict(
-            orientation="h",
-            y=-0.1,
-            x=0.5,
-            xanchor="center",
+            orientation="v",
+            y=0.97,
+            x=0.05,
+            xanchor="left",
             yanchor="top",
-            font=dict(size=14),
+            font=dict(size=14,family="Arial Black"),
         ),
-        margin=dict(t=100, b=150)
     )
     apply_legend_border(fig)
     save_with_plot_border(
         fig,
-        png_path=OUTPUT_DIR / "count_category_over_years.png",
-        pdf_path=OUTPUT_DIR / "count_category_over_years.pdf",
+        png_path=OUTPUT_DIR / "count_category_over_years_v2.png",
+        pdf_path=OUTPUT_DIR / "count_category_over_years_v2.pdf",
     )
 

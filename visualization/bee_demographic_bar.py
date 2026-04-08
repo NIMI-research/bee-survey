@@ -25,7 +25,7 @@ def plot_bar_bee_demographic(df):
         df.groupby("research_country")
         .size()
         .reset_index(name="count")
-        .sort_values("count", ascending=False)
+        .sort_values(["count", "research_country"], ascending=[False, True])
     )
     total_papers = int(data["count"].sum())
     ordered_countries = data["research_country"].tolist()
@@ -62,7 +62,7 @@ def plot_bar_bee_demographic(df):
             y=data["research_country"],
             orientation="h",
             width=0.82,
-            marker=dict(color=SECONDARY_PALETTE[0]),
+            marker=dict(color=SECONDARY_PALETTE[3]),
             text=data["count"],
             textposition="outside",
             texttemplate="%{x}",
@@ -71,12 +71,12 @@ def plot_bar_bee_demographic(df):
     )
 
     fig.update_layout(
-        title=(
-            "Countries Where AI Bee Research Is Conducted (Ranked by Paper Count)"
-            f"<br><sup>Total Papers: {total_papers}</sup>"
+        title=dict(
+            text="<b>Countries Where AI Bee Research Is Conducted</b>",
+            font=dict(size=39, family="Arial Black"),
         ),
         template="plotly_white",
-        height=700,
+        height=1000,
         width=1100,
         shapes=band_shapes,
         xaxis=dict(
@@ -97,16 +97,17 @@ def plot_bar_bee_demographic(df):
             tickmode="array",
             tickvals=ordered_countries,
             ticktext=display_countries,
-            automargin=True,
+            tickfont=dict(size=15, family="Arial Black"),
         ),
-        margin=dict(l=240, r=80, t=110, b=60),   # wider l for the standoff gap
+        margin=dict(l=240,r=80, t=110, b=60),   # wider l for the standoff gap
         uniformtext=dict(mode="hide", minsize=10),
-        font=dict(size=13),
-        bargap=0.5,
+        font=dict(size=13, family="Arial Black"),
+        bargap=0.75,
     )
 
     fig.update_traces(
-        # ── Italic dark-brown count labels ──────────────────────────────────
+        # ── Italic dark-brown count labels ──────
+        #first color from plotly spectral palette that is orange
         textfont=dict(size=12, color="#4a2c0a", style="italic"),
         hovertemplate="Country: %{y}<br>Count: %{x}<extra></extra>",
     )

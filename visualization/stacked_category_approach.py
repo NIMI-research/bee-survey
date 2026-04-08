@@ -19,6 +19,26 @@ def _clip_category_text(text, max_words=5):
     return text
 
 
+def _format_xlabel(text, words_per_line=3, max_lines=2):
+    """Wrap x-axis labels into at most max_lines, each with words_per_line words."""
+    if not text:
+        return text
+
+    words = str(text).split()
+    wrapped_lines = []
+    for line_idx in range(max_lines):
+        start = line_idx * words_per_line
+        end = start + words_per_line
+        if start >= len(words):
+            break
+        wrapped_lines.append(" ".join(words[start:end]))
+
+    if len(words) > words_per_line * max_lines and wrapped_lines:
+        wrapped_lines[-1] = f"{wrapped_lines[-1]}..."
+
+    return "<br>".join(wrapped_lines)
+
+
 def count_approach_over_category(df):
     df = df.copy()
 
@@ -35,6 +55,7 @@ def count_approach_over_category(df):
 
     categories = sorted(data["Category (section)"].unique())
     approaches = list(data["Approach group"].unique())
+    formatted_categories = [_format_xlabel(category) for category in categories]
 
     fig = go.Figure()
 
@@ -65,8 +86,8 @@ def count_approach_over_category(df):
         title_font=dict(size=28),
         paper_bgcolor="white",
         plot_bgcolor="white",
-        height=1000,
-        width=1500,
+        height=900,
+        width=1600,
         # xaxis=dict(
         #     tickangle=30,
         #     showgrid=False,
@@ -81,12 +102,17 @@ def count_approach_over_category(df):
         # ),
         xaxis=dict(
             showgrid=False,
-            tickfont=dict(size=16),
+            tickfont=dict(size=16, family="Arial Black"),
+            tickmode="array",
+            tickvals=categories,
+            ticktext=formatted_categories,
+            tickangle=0,
+            automargin=True,
         ),
         yaxis=dict(
             tickformat="d",
             showgrid=False,
-            tickfont=dict(size=16),
+            tickfont=dict(size=16, family="Arial Black"),
         ),
         legend=dict(
             orientation="v",
@@ -94,9 +120,9 @@ def count_approach_over_category(df):
             x=1,
             xanchor="right",
             yanchor="top",
-            font=dict(size=16)
+            font=dict(size=20)
         ),
-        margin=dict(t=100, b=200),
+        margin=dict(t=100, b=50),
         xaxis_showline=True,
         xaxis_linewidth=2,
         xaxis_linecolor="black",

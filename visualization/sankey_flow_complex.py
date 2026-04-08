@@ -109,11 +109,20 @@ def plot_modality_approach_category_sankey(df):
     # --- Count flows ---
     counts = df.groupby(["Data Modality", "Approach group", "Category section"]).size().reset_index(name="count")
 
-    modalities = list(df["Data Modality"].unique())
-    approaches = list(df["Approach group"].unique())
-    categories = list(df["Category section"].unique())
+    modality_totals = counts.groupby("Data Modality", as_index=False)["count"].sum()
+    approach_totals = counts.groupby("Approach group", as_index=False)["count"].sum()
+    category_totals = counts.groupby("Category section", as_index=False)["count"].sum()
+
+    modality_totals = modality_totals.sort_values(["count", "Data Modality"], ascending=[False, True])
+    approach_totals = approach_totals.sort_values(["count", "Approach group"], ascending=[False, True])
+    category_totals = category_totals.sort_values(["count", "Category section"], ascending=[False, True])
+
+    modalities = modality_totals["Data Modality"].tolist()
+    approaches = approach_totals["Approach group"].tolist()
+    categories = category_totals["Category section"].tolist()
 
     labels = modalities + approaches + categories
+    bold_labels = [f"<b>{label}</b>" for label in labels]
     node_x = [0.01] * len(modalities) + [0.50] * len(approaches) + [0.99] * len(categories)
 
     # Node colors
@@ -146,8 +155,9 @@ def plot_modality_approach_category_sankey(df):
 
     # --- Build Sankey ---
     fig = go.Figure(go.Sankey(
+        textfont=dict(family="Arial", size=15),
         node=dict(
-            label=labels,
+            label=bold_labels,
             pad=15,
             thickness=15,
             color=node_colors,
@@ -164,9 +174,13 @@ def plot_modality_approach_category_sankey(df):
 
     fig.update_layout(
         template="plotly_white",
-        title="Data Modality → Approach → Category Flow",
-        height=600,
-        width=1000
+        title=dict(
+            text="<b>Flow from Data Modality to Approach and Category</b>",
+            font=dict(family="Arial", size=24),
+        ),
+        font=dict(family="Arial"),
+        height=700,
+        width=1400
     )
     apply_legend_border(fig)
     save_with_plot_border(
