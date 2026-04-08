@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 
-from const import OUTPUT_DIR
+from const import INPUT_DIR, OUTPUT_DIR
 from utils import apply_legend_border, save_with_plot_border
 
 # ---------------------------------------------------------------------------
@@ -14,6 +14,104 @@ PI = np.pi
 
 COLOR_PALETTE = list(px.colors.sequential.Brwnyl) + list(px.colors.sequential.YlOrBr)
 MIN_MIGRATION_GEOMETRY_WEIGHT = 5.0
+
+
+def _load_country_region_metadata():
+    try:
+        iso_df = pd.read_csv(
+            INPUT_DIR / "iso_codes.csv",
+            usecols=["name", "region", "region-code"],
+            dtype=str,
+        ).fillna("")
+    except Exception:
+        return {}, {}
+
+    iso_df["name"] = iso_df["name"].astype(str).str.strip()
+    iso_df["region"] = iso_df["region"].astype(str).str.strip()
+    iso_df["region-code"] = iso_df["region-code"].astype(str).str.strip()
+
+    country_to_region = {
+        row["name"]: row["region"]
+        for _, row in iso_df.iterrows()
+        if row["name"]
+    }
+
+    region_to_code = {}
+    for _, row in iso_df.iterrows():
+        region = row["region"]
+        code = row["region-code"]
+        if not region or region in region_to_code:
+            continue
+        region_to_code[region] = int(code) if str(code).isdigit() else 10**9
+
+    return country_to_region, region_to_code
+
+
+def _country_region_sort_order(countries, country_to_region, region_to_code):
+    countries = list(countries)
+    if not countries:
+        return []
+
+    if not country_to_region:
+        return sorted(countries)
+
+    unknown_region_rank = 10**9
+
+    return sorted(
+        countries,
+        key=lambda country: (
+            region_to_code.get(country_to_region.get(country, ""), unknown_region_rank),
+            country_to_region.get(country, "ZZZ"),
+            country,
+        ),
+    )
+
+
+def _build_continent_arc_traces(countries, country_to_region, region_to_code, ideo_ends, radius):
+    if not countries:
+        return []
+
+    segments = []
+    start_idx = 0
+    while start_idx < len(countries):
+        region = country_to_region.get(countries[start_idx], "").strip()
+        end_idx = start_idx
+        while (
+            end_idx + 1 < len(countries)
+            and country_to_region.get(countries[end_idx + 1], "").strip() == region
+        ):
+            end_idx += 1
+
+        if region and end_idx > start_idx:
+            segments.append((region, start_idx, end_idx))
+        start_idx = end_idx + 1
+
+    if not segments:
+        return []
+
+    unique_regions = sorted(
+        {region for region, _, _ in segments},
+        key=lambda region: (region_to_code.get(region, 10**9), region),
+    )
+    region_colors = {
+        region: _hex_to_rgba(COLOR_PALETTE[i % len(COLOR_PALETTE)], 0.95)
+        for i, region in enumerate(unique_regions)
+    }
+
+    traces = []
+    for region, left, right in segments:
+        z_arc = _make_ideogram_arc(radius, (ideo_ends[left][0], ideo_ends[right][1]), n_pts=90)
+        traces.append(go.Scatter(
+            x=z_arc.real,
+            y=z_arc.imag,
+            mode="lines",
+            line=dict(color=region_colors[region], width=8),
+            text=f"{region}<br>Countries: {right - left + 1}",
+            hoverinfo="text",
+            showlegend=False,
+        ))
+
+    return traces
 
 
 def _hex_to_rgba(hex_color: str, alpha: float = 0.75) -> str:
@@ -177,6 +275,7 @@ def _invPerm(perm):
 # ---------------------------------------------------------------------------
 def plot_circular_migration_bee_research(df):
     df = df.copy()
+    country_to_region, region_to_code = _load_country_region_metadata()
 
     df = df.rename(columns={
         "Bee_country": "Bee Country",
@@ -193,8 +292,10 @@ def plot_circular_migration_bee_research(df):
         .size()
         .reset_index(name="count")
     )
-    countries = sorted(
-        pd.unique(flows[["Bee Country", "Research Country"]].values.ravel())
+    countries = _country_region_sort_order(
+        pd.unique(flows[["Bee Country", "Research Country"]].values.ravel()),
+        country_to_region,
+        region_to_code,
     )
     n = len(countries)
     idx = {c: i for i, c in enumerate(countries)}
@@ -289,6 +390,13 @@ def plot_circular_migration_bee_research(df):
     # Draw ideogram arcs
     ideograms = []
     R_outer, R_inner = 1.26, 1.15
+    continent_arc_traces = _build_continent_arc_traces(
+        countries,
+        country_to_region,
+        region_to_code,
+        ideo_ends,
+        radius=R_outer + 0.09,
+    )
 
     for k in range(n):
         z_out = _make_ideogram_arc(R_outer, ideo_ends[k])
@@ -310,7 +418,7 @@ def plot_circular_migration_bee_research(df):
         shapes.append(_make_ideo_shape(path, "rgb(150,150,150)", ideo_colors[k]))
 
     # ── Fix labels: cascade radius tiers with full wrap-around handling ───
-    R_BASE    = R_outer + 0.18
+    R_BASE    = R_outer + 0.22
     R_STEP    = 0.15
     MIN_GAP   = np.deg2rad(6)   # minimum angular separation
 
@@ -345,6 +453,8 @@ def plot_circular_migration_bee_research(df):
         k     = spec["k"]
         angle = spec["angle"]
         r     = spec["r"]
+        if "united states" in countries[k].lower() or "germany" in countries[k].lower():
+            r += 0.1
         deg   = np.degrees(angle)
 
         lx = r * np.cos(angle)
@@ -373,7 +483,7 @@ def plot_circular_migration_bee_research(df):
             xref="x", yref="y",
         ))
 
-    data = ideograms + ribbon_info
+    data = continent_arc_traces + ideograms + ribbon_info
 
     axis_cfg = dict(
         showline=False, zeroline=False, showgrid=False,

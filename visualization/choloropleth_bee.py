@@ -18,12 +18,23 @@ def _stretched_colorscale(max_count, low_threshold=5, low_fraction=0.65):
         low_threshold:   The value below which we want finer colour resolution (default 5).
         low_fraction:    Fraction of the colour spectrum assigned to [0, low_threshold] (default 0.65).
     """
-    spectral_palette = list(px.colors.diverging.Spectral_r)
+    #spectral_palette = list(px.colors.diverging.Spectral_r)
+    spectral_palette= [
+    '#3288bd',  # Dark blue
+    '#66c2a5',  # Teal
+   '#abdda4',  # Light green
+    '#e6f598',  # Pale yellow-green
+    "#fed400",  # Light cream (center)
+    '#fee090',  # Light yellow
+    "#ee9943",  # Orange
+    '#f46d43',  # Orange-red
+    '#d53e4f',  # Dark red
+]
     #inferno_palette = spectral_palette[2:] if len(spectral_palette) > 2 else spectral_palette
     #remove last 2 values
     inferno_palette = spectral_palette[:-2] if len(spectral_palette) > 2 else spectral_palette
     n = len(inferno_palette)
-    fallback_color="rgba(128, 128, 128, 0.6)"  # dark gray with some transparency
+    fallback_color="rgba(128, 128, 128, 0.4)"  # dark gray with some transparency
 
     if max_count <= 0:
         return [[0.0, fallback_color], [1.0, fallback_color]]
@@ -143,26 +154,35 @@ def plot_choropleth_country(df):
             zmin=0,
             zmax=zmax,
             colorbar=dict(
-                title="Paper Count",
+                title=dict(text="Paper Count", font=dict(size=20, family="Arial Black")),
+                len=0.75,
                 tickmode="array",
                 tickvals=tickvals,
                 ticktext=[str(v) for v in tickvals],
+                tickfont=dict(size=18, family="Arial Black"),
             ),
         )
     )
 
     fig.update_layout(
-        title="DEMOGRAPHIC FROM WHICH BEES ARE STUDIED",
+        title=dict(
+            text="<b>Bee Demographics Represented in the Papers</b>",
+            font=dict(size=40, family="Arial Black"),
+            y=0.95,
+        ),
         template="plotly_white",
         geo=dict(
             showframe=False,
             showcoastlines=True,
-            showland=True,
-            lataxis=dict(range=[-58, 90]),
-            lonaxis=dict(range=[-180, 180]),
+            coastlinecolor="#696969",
+            projection=dict(type="natural earth", scale=1.08),
+            # Explicit bounds prevent clipping and frame spacing issues
+            lataxis=dict(range=[-60, 85]),
+            lonaxis=dict(range=[-200, 200]),
         ),
-        height=700,
-        width=1100,
+        height=1000,
+        width=1500,
+        margin=dict(l=50, r=50, t=100, b=50),  # Control spacing around the plot
     )
     apply_legend_border(fig)
     save_with_plot_border(
