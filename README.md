@@ -7,7 +7,7 @@ This project provides a comprehensive suite of tools to load, analyze, and visua
 - Generate literature datasets using `data_builder`
 - Load and process survey data with `data_loader`
 - Display dataset overview and basic statistics
-- Generate 20 diverse visualizations for data analysis and exploration
+- Generate 10+ diverse visualizations for data analysis and exploration
 
 ## Workflow
 
@@ -21,6 +21,16 @@ This project provides a comprehensive suite of tools to load, analyze, and visua
 - Simply run `main.py` directly
 
 The `data_builder` merges multiple subset sheets, deduplicates records, reconciles with the Sources sheet (treating it as ground truth), and outputs a single standardized CSV that `main.py` can process.
+
+### Visualization.csv Generation
+
+**`data_loader.py`** automatically generates `Visualization.csv` when `main.py` runs:
+- Reads either the Excel workbook or MAIN_CSV_PATH
+- Filters out records with missing titles/authors or marked as "Fail"
+- Deduplicates records by title
+- Adds country and ISO code columns
+- Outputs the final processed CSV to `input/Visualization.csv`
+
 
 ## Project Structure
 
