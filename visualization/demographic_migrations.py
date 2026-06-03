@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 
-from const import INPUT_DIR, OUTPUT_DIR
+from const import OUTPUT_DIR, SOURCE_WORKBOOK_PATH
 from utils import apply_legend_border, save_with_plot_border
 
 # ---------------------------------------------------------------------------
@@ -18,8 +18,9 @@ MIN_MIGRATION_GEOMETRY_WEIGHT = 5.0
 
 def _load_country_region_metadata():
     try:
-        iso_df = pd.read_csv(
-            INPUT_DIR / "iso_codes.csv",
+        iso_df = pd.read_excel(
+            SOURCE_WORKBOOK_PATH,
+            sheet_name="iso_codes",
             usecols=["name", "region", "region-code"],
             dtype=str,
         ).fillna("")

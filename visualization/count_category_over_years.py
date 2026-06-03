@@ -77,7 +77,7 @@ def count_category_over_years(df):
     apply_legend_border(fig)
     save_with_plot_border(
         fig,
-        png_path=OUTPUT_DIR / "count_category_over_years_v2.png",
-        pdf_path=OUTPUT_DIR / "count_category_over_years_v2.pdf",
+        png_path=OUTPUT_DIR / "count_category_over_years.png",
+        pdf_path=OUTPUT_DIR / "count_category_over_years.pdf",
     )
 

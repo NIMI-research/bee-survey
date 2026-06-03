@@ -115,7 +115,7 @@ def ridge_plot_approaches_over_years(df):
             ticktext=approaches,
             showgrid=False,
             ticklabelstandoff=18,
-            tickfont=dict(size=18, family="Arial Black"),
+            tickfont=dict(size=20),
         ),
         showlegend=False,
         margin=dict(t=100, b=80, l=200, r=50),

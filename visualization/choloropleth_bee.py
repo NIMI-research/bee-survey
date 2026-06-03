@@ -3,8 +3,12 @@ import plotly.graph_objects as go
 from plotly.colors import sequential
 import math
 import plotly.express as px
-from const import FALLBACK_CATEGORY_COLOR, INPUT_DIR, OUTPUT_DIR
+import logging
+from const import FALLBACK_CATEGORY_COLOR, OUTPUT_DIR, SOURCE_WORKBOOK_PATH
 from utils import apply_legend_border, save_with_plot_border
+
+
+logger = logging.getLogger(__name__)
 
 
 def _stretched_colorscale(max_count, low_threshold=5, low_fraction=0.65):
@@ -22,10 +26,16 @@ def _stretched_colorscale(max_count, low_threshold=5, low_fraction=0.65):
     spectral_palette= [
     '#3288bd',  # Dark blue
     '#66c2a5',  # Teal
-   '#abdda4',  # Light green
+    '#88d1a7',  # Soft teal-green
+    '#abdda4',  # Light green
+    '#c8e99f',  # Lime tint
     '#e6f598',  # Pale yellow-green
+    '#f3fa8c',  # Lemon yellow-green
+    "#fefe8b",  # Light yellow-orange
+    '#fee45f',  # Warm yellow
     "#fed400",  # Light cream (center)
     '#fee090',  # Light yellow
+    '#f7bc66',  # Amber
     "#ee9943",  # Orange
     '#f46d43',  # Orange-red
     '#d53e4f',  # Dark red
@@ -125,8 +135,11 @@ def plot_choropleth_country(df):
         .rename(columns={"_plot_country": "Country", "_plot_iso": "iso_code"})
     )
 
-    iso_reference = pd.read_csv(
-        INPUT_DIR / "iso_codes.csv", usecols=["name", "alpha-3"], dtype=str
+    iso_reference = pd.read_excel(
+        SOURCE_WORKBOOK_PATH,
+        sheet_name="iso_codes",
+        usecols=["name", "alpha-3"],
+        dtype=str,
     ).fillna("")
     iso_reference = iso_reference.rename(columns={"name": "Country", "alpha-3": "iso_code"})
     iso_reference["iso_code"] = iso_reference["iso_code"].str.strip().str.upper()
@@ -135,6 +148,14 @@ def plot_choropleth_country(df):
         & iso_reference["iso_code"].ne("ATA")
         & iso_reference["Country"].str.strip().str.lower().ne("antarctica")
     ].drop_duplicates(subset=["iso_code"], keep="first")
+
+    missing_iso_entries = data.loc[~data["iso_code"].isin(iso_reference["iso_code"])]
+    for _, row in missing_iso_entries.iterrows():
+        logger.error(
+            "Country not found in ISO reference, ignored for mapping: %s (ISO: %s)",
+            row["Country"],
+            row["iso_code"],
+        )
 
     data = iso_reference.merge(data, on="iso_code", how="left", suffixes=("", "_obs"))
     data["Country"] = data["Country_obs"].fillna(data["Country"])

@@ -30,7 +30,6 @@ SOURCE_SHEETS = [
 SOURCES_SHEET = "Sources"
 
 COLUMN_CANDIDATES = {
-    "Paper Title": ["Paper Title", "PaperTitle", "Paper Title of Sources"],
     "Papers": ["Papers", "Paper", "Title"],
     "URL": ["URL", "Link", "Paper URL", "Source URL"],
     "Authors": ["Authors", "Author"],
@@ -55,7 +54,6 @@ COLUMN_CANDIDATES = {
 }
 
 BASE_COLUMNS = [
-    "Paper Title",
     "Papers",
     "URL",
     "Authors",

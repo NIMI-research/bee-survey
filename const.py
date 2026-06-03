@@ -13,7 +13,7 @@ VISUALIZATION_CSV_PATH = INPUT_DIR / "Visualization.csv"
 CATEGORY_COLORS = {
     "Tracking & Pose Estimation": "#6D4C41",
     "Detection": "#A1887F",
-    "Classification": "#FFE226", #originally "#D7CCC8"
+    "Classification": "#FFE926", #originally "#D7CCC8"
     "Monitoring & Health Assessment": "#FBC02D",
 }
 
