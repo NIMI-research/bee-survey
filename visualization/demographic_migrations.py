@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objs as go
 
-from const import OUTPUT_DIR, SOURCE_WORKBOOK_PATH
+from const import OUTPUT_DIR, MIGRATION_PAL, SOURCE_WORKBOOK_PATH
 from utils import apply_legend_border, save_with_plot_border
 
 # ---------------------------------------------------------------------------
@@ -12,7 +12,6 @@ from utils import apply_legend_border, save_with_plot_border
 
 PI = np.pi
 
-COLOR_PALETTE = list(px.colors.sequential.Brwnyl) + list(px.colors.sequential.YlOrBr)
 MIN_MIGRATION_GEOMETRY_WEIGHT = 5.0
 
 
@@ -95,7 +94,7 @@ def _build_continent_arc_traces(countries, country_to_region, region_to_code, id
         key=lambda region: (region_to_code.get(region, 10**9), region),
     )
     region_colors = {
-        region: _hex_to_rgba(COLOR_PALETTE[i % len(COLOR_PALETTE)], 0.95)
+        region: _hex_to_rgba(MIGRATION_PAL[i % len(MIGRATION_PAL)], 0.95)
         for i, region in enumerate(unique_regions)
     }
 
@@ -313,7 +312,7 @@ def plot_circular_migration_bee_research(df):
     matrix = matrix[np.ix_(keep_idx, keep_idx)]
     n = len(countries)
 
-    ideo_colors = [_hex_to_rgba(COLOR_PALETTE[i % len(COLOR_PALETTE)], 0.75) for i in range(n)]
+    ideo_colors = [_hex_to_rgba(MIGRATION_PAL[i % len(MIGRATION_PAL)], 0.75) for i in range(n)]
 
     # ── Fix ribbon widths: use symmetric matrix so both sides of a ribbon
     #    are sized by max(forward, backward) flow, never collapsing to 0 ──

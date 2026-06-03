@@ -1,3 +1,19 @@
+"""
+Data Loader for Bee-AI Literature Survey
+
+This module loads, canonicalizes, normalizes, and deduplicates literature data from multiple sources
+(Excel workbooks and CSV files) for the Bee-AI research survey. It handles:
+
+- Column name mapping and standardization across different source formats
+- Text normalization and fuzzy matching for duplicate detection
+- ISO code resolution and country/region standardization
+- Data validation and subcategory filtering
+- Merging and deduplication of records from multiple input sources
+
+The module provides functions to load data from SOURCE_WORKBOOK_PATH, VISUALIZATION_CSV_PATH,
+and MAIN_CSV_PATH, canonicalizing all data to a consistent output schema with standardized columns.
+"""
+
 import re
 import unicodedata
 from difflib import SequenceMatcher
