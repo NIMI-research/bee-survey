@@ -4,7 +4,7 @@ from const import OUTPUT_DIR, CATEGORY_COLORS, FALLBACK_CATEGORY_COLOR, SECONDAR
 import pandas as pd
 from utils import apply_legend_border, save_with_plot_border
 
-
+FALLBACK_CATEGORY_COLOR = "#585252"
 MIDDLE_LINK_SCALE = 1.35
 LINK_ALPHA = 0.22
 
@@ -85,6 +85,7 @@ def _prepare_modality_approach_category(df):
                         deduped.append(part)
 
                 if deduped:
+                    deduped = sorted(deduped, key=lambda s: s.lower())
                     return ", ".join(deduped[:3])
             return first_word.title()
         else:
@@ -113,9 +114,9 @@ def plot_modality_approach_category_sankey(df):
     approach_totals = counts.groupby("Approach group", as_index=False)["count"].sum()
     category_totals = counts.groupby("Category section", as_index=False)["count"].sum()
 
-    modality_totals = modality_totals.sort_values(["count", "Data Modality"], ascending=[False, True])
-    approach_totals = approach_totals.sort_values(["count", "Approach group"], ascending=[False, True])
-    category_totals = category_totals.sort_values(["count", "Category section"], ascending=[False, True])
+    modality_totals = modality_totals.sort_values(["Data Modality"], ascending=[True])
+    approach_totals = approach_totals.sort_values(["Approach group"], ascending=[True])
+    category_totals = category_totals.sort_values(["Category section"], ascending=[True])
 
     modalities = modality_totals["Data Modality"].tolist()
     approaches = approach_totals["Approach group"].tolist()
@@ -155,7 +156,7 @@ def plot_modality_approach_category_sankey(df):
 
     # --- Build Sankey ---
     fig = go.Figure(go.Sankey(
-        textfont=dict(family="Arial", size=15),
+        textfont=dict(family="Arial", size=17),
         node=dict(
             label=bold_labels,
             pad=15,

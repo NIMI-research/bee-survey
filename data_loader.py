@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from const import INPUT_DIR, MAIN_CSV_PATH, SOURCE_WORKBOOK_PATH, VISUALIZATION_CSV_PATH
+from const import MAIN_CSV_PATH, SOURCE_WORKBOOK_PATH, VISUALIZATION_CSV_PATH
 
 
 SOURCE_SHEET = "Sources"
@@ -69,7 +69,7 @@ ALLOWED_SUBCATEGORY_PATTERNS = {
     "tracking & pose estimation",
 }
 
-ISO_CODES_PATH = INPUT_DIR / "iso_codes.csv"
+ISO_CODES_SHEET = "iso_codes"
 
 ISO_ALIAS_TO_CODE = {
     "US": "USA",
@@ -130,9 +130,22 @@ def _canonicalize(df):
 
 def _title_key(value):
     text = _normalize_text(value).lower()
+    # Expand common abbreviations to normalize variants
+    text = re.sub(r"\bml\b", "machinelearning", text)
+    text = re.sub(r"\bai\b", "artificialintelligence", text)
+    # Remove common extra phrases that may differ between variants
+    text = re.sub(r"recorded\s+inside\s+and\s+outside\s+the\s+beehive\s+an\s+", " ", text)
     text = re.sub(r"\([^)]*\)|\[[^\]]*\]|\{[^}]*\}", " ", text)
     text = re.sub(r"[^a-z0-9]+", " ", text)
     return re.sub(r"\s+", "", text)
+
+
+def _standardize_title(value):
+    title = _normalize_text(value)
+    if not title:
+        return ""
+    compact = re.sub(r"\s+", " ", title).strip()
+    return compact
 
 
 def _year_key(value):
@@ -264,8 +277,16 @@ def _load_iso_lookup():
     lookup = {}
     code_to_country = {}
 
-    if ISO_CODES_PATH.exists():
-        iso_df = pd.read_csv(ISO_CODES_PATH, dtype=str).fillna("")
+    if Path(SOURCE_WORKBOOK_PATH).exists():
+        try:
+            iso_df = pd.read_excel(
+                SOURCE_WORKBOOK_PATH,
+                sheet_name=ISO_CODES_SHEET,
+                dtype=str,
+            ).fillna("")
+        except Exception:
+            iso_df = pd.DataFrame()
+
         for _, row in iso_df.iterrows():
             name = _normalize_text(row.get("name"))
             alpha2 = _normalize_text(row.get("alpha-2")).upper()
@@ -370,6 +391,7 @@ def _finalize(df, sort_by_number):
     out = out[out["title"].map(bool) & out["authors"].map(bool)]
     out = out[~out["pass/fail"].map(_is_fail_value)]
     out = _apply_reorganize_rules(out)
+    out["title"] = out["title"].map(_standardize_title)
     out = out.drop_duplicates(subset=["title"], keep="first")
     out = _add_country_iso_columns(out)
 
