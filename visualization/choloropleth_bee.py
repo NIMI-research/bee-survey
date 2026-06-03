@@ -4,7 +4,7 @@ from plotly.colors import sequential
 import math
 import plotly.express as px
 import logging
-from const import FALLBACK_CATEGORY_COLOR, OUTPUT_DIR, SOURCE_WORKBOOK_PATH
+from const import FALLBACK_CATEGORY_COLOR, OUTPUT_DIR, SOURCE_WORKBOOK_PATH, SPECTRAL_PAL
 from utils import apply_legend_border, save_with_plot_border
 
 
@@ -22,27 +22,7 @@ def _stretched_colorscale(max_count, low_threshold=5, low_fraction=0.65):
         low_threshold:   The value below which we want finer colour resolution (default 5).
         low_fraction:    Fraction of the colour spectrum assigned to [0, low_threshold] (default 0.65).
     """
-    #spectral_palette = list(px.colors.diverging.Spectral_r)
-    spectral_palette= [
-    '#3288bd',  # Dark blue
-    '#66c2a5',  # Teal
-    '#88d1a7',  # Soft teal-green
-    '#abdda4',  # Light green
-    '#c8e99f',  # Lime tint
-    '#e6f598',  # Pale yellow-green
-    '#f3fa8c',  # Lemon yellow-green
-    "#fefe8b",  # Light yellow-orange
-    '#fee45f',  # Warm yellow
-    "#fed400",  # Light cream (center)
-    '#fee090',  # Light yellow
-    '#f7bc66',  # Amber
-    "#ee9943",  # Orange
-    '#f46d43',  # Orange-red
-    '#d53e4f',  # Dark red
-]
-    #inferno_palette = spectral_palette[2:] if len(spectral_palette) > 2 else spectral_palette
-    #remove last 2 values
-    inferno_palette = spectral_palette[:-2] if len(spectral_palette) > 2 else spectral_palette
+    inferno_palette = SPECTRAL_PAL[:-2] if len(SPECTRAL_PAL) > 2 else SPECTRAL_PAL
     n = len(inferno_palette)
     fallback_color="rgba(128, 128, 128, 0.4)"  # dark gray with some transparency
 
