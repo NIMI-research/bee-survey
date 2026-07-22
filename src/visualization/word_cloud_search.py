@@ -9,16 +9,18 @@ from PIL import Image, ImageDraw
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
-from const import OUTPUT_DIR, WORDCLOUD_PAL
 from utils import save_with_plot_border
 
 # ============================================================================
 # CONFIGURATION (update as needed)
 # ============================================================================
 
+OUTPUT_DIR = Path("output")
+SECONDARY_PALETTE = ["#CD7F32", "#DBAC60", "#FFD700", "#FFA500", "#714106"]
+
 
 def _color_func(word, font_size, position, orientation, random_state=None, **kwargs):
-    return random.choice(WORDCLOUD_PAL)
+    return random.choice(SECONDARY_PALETTE)
 
 
 

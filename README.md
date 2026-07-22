@@ -1,77 +1,35 @@
 # Bee Survey Data Analysis
 
-This project provides a comprehensive suite of tools to load, analyze, and visualize literature survey data for bee research. The main entry point is `main.py`.
+This project provides tools to load, analyze, and visualize literature survey data for bee research. The main entry point is `main.py`.
 
 ## Features
 
-- Generate literature datasets using `data_builder`
-- Load and process survey data with `data_loader`
-- Display dataset overview and basic statistics
-- Generate 10+ diverse visualizations for data analysis and exploration
+- Collect and preprocess papers from different sources into a single dataset using `data_preprocessor.py`, which produces `main.csv`.
+- `main.csv` is then processed into `visualizations.csv`, the dataset used for plotting.
+- Display dataset overview and basic statistics.
+- Generate 7 visualizations for analysis (4 of which are used in the paper).
 
-## Workflow
+## Data Pipeline
 
-**If input is an Excel workbook with multiple subset sheets:**
+1. Papers collected from different sources are combined by `data_preprocessor.py` into `main.csv`.
+2. When new papers are added, append them to `main.csv` and re-run preprocessing to regenerate `visualizations.csv`.
+3. `visualizations.csv` is the dataset consumed by the plotting scripts.
 
-1. **Run `data_builder.py` first** to consolidate and standardize the data from multiple sheets (e.g., "New-original 2024-2025", "Pass", "Original", "original-2011-2023") into a uniform CSV format (`MAIN_CSV_PATH`)
-2. **Then run `main.py`** to load the consolidated CSV and generate visualizations
-
-**If input is already a prepared CSV:**
-
-- Simply run `main.py` directly
-
-The `data_builder` merges multiple subset sheets, deduplicates records, reconciles with the Sources sheet (treating it as ground truth), and outputs a single standardized CSV that `main.py` can process.
-
-### Visualization.csv Generation
-
-**`data_loader.py`** automatically generates `Visualization.csv` when `main.py` runs:
-- Reads either the Excel workbook or MAIN_CSV_PATH
-- Filters out records with missing titles/authors or marked as "Fail"
-- Deduplicates records by title
-- Adds country and ISO code columns
-- Outputs the final processed CSV to `input/Visualization.csv`
-
-
-## Project Structure
-
+## Setup
+Project Structure:
 ```
 bee-survey/
-├── main.py                          # Entry point for running the application
-├── data_builder.py                  # Build and prepare datasets
-├── data_loader.py                   # Load CSV data and manage data pipelines
-├── const.py                         # Project constants and configuration
-├── utils.py                         # Utility functions
-├── requirements.txt                 # Python dependencies
-│
-├── input/                           # Input data directory
-│   ├── Bee-Me Literature Review_Main.csv
-│   └── Visualization.csv
-│
-├── output/                          # Generated outputs directory
-│
-└── visualization/                   # Visualization scripts
-    ├── bee_demographic.py           # Demographic analysis charts
-    ├── bee_demographic_bar.py       # Bar chart demographics
-    ├── bubble_approach.py           # Bubble chart analysis
-    ├── bubble_vista.py              # Bubble chart variants
-    ├── category_approach_bar.py     # Category bar charts
-    ├── choloropleth_bee.py          # Choropleth maps
-    ├── count_category_over_years.py # Category counts over time
-    ├── demographic_migrations.py    # Migration pattern analysis
-    ├── demographic_relations.py     # Demographic relationships
-    ├── heatmap_approach.py          # Heatmap visualizations
-    ├── hierarchy.py                 # Hierarchical visualizations
-    ├── nodes_approach_category.py   # Node-based category analysis
-    ├── ridge_category_years.py      # Ridge plots by category
-    ├── sankey_flow.py               # Sankey diagram flows
-    ├── sankey_flow_complex.py       # Complex Sankey flows
-    ├── stacked_category_approach.py # Stacked category charts
-    ├── timeline_category_n_approach.py # Timeline analysis
-    ├── violin_category.py           # Violin plots
-    ├── word_cloud_search.py         # Word cloud generation
-    └── year_category_pies.py        # Pie charts by year
+├── src/
+├──── main.py
+├──── data_preprocessor.py
+├──── data_loader.py
+├──── visualization/
+├── input/
+├──── [text](<Bee-Me Literature Review_Main.csv>)
+├──── [text](<Bee-Me Literature Reviewcsv>)
+├── output/
+└───── visualizations/
 ```
-
 
 ### Using Conda
 

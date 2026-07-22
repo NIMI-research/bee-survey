@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 from const import SECONDARY_PALETTE, FALLBACK_CATEGORY_COLOR, INPUT_DIR, OUTPUT_DIR
 from utils import apply_legend_border, save_with_plot_border
 
-
 def plot_bar_bee_demographic(df):
     df = df.copy()
 
