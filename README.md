@@ -4,15 +4,14 @@ This project provides tools to load, analyze, and visualize literature survey da
 
 ## Features
 
-- Collect and preprocess papers from different sources into a single dataset using `data_preprocessor.py`, which produces `main.csv`.
-- `main.csv` is then processed into `visualizations.csv`, the dataset used for plotting.
+- Collect and preprocess papers from different sources into a single dataset using `data_preprocessor.py`.
 - Display dataset overview and basic statistics.
-- Generate 7 visualizations for analysis (4 of which are used in the paper).
+- Generate 7 visualizations for analysis (5 of which are used in the paper).
 
 ## Data Pipeline
 
-1. Papers collected from different sources are combined by `data_preprocessor.py` into `main.csv`.
-2. When new papers are added, append them to `main.csv` and re-run preprocessing to regenerate `visualizations.csv`.
+1. Papers collected from different sources are combined by `data_preprocessor.py` into `Bee-Me Literature Review_Main.csv`.
+2. When new papers are added, append them to `Bee-Me Literature Review_Main.csv` and re-run preprocessing to regenerate `visualizations.csv`.
 3. `visualizations.csv` is the dataset consumed by the plotting scripts.
 
 ## Setup
