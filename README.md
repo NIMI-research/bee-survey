@@ -25,8 +25,8 @@ bee-survey/
 ├──── data_loader.py
 ├──── visualization/
 ├── input/
-├──── [text](<Bee-Me Literature Review_Main.csv>)
-├──── [text](<Bee-Me Literature Reviewcsv>)
+├──── <Bee-Me Literature Review_Main.csv>
+├──── <Visualizations.csv>
 ├── output/
 └───── visualizations/
 ```
