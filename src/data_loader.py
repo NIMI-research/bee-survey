@@ -1,35 +1,31 @@
 """
 Data Loader for Bee-AI Literature Survey
 
-This module loads, canonicalizes, normalizes, and deduplicates literature data from multiple sources
-(Excel workbooks and CSV files) for the Bee-AI research survey. It handles:
+This module loads, canonicalizes, normalizes, and deduplicates literature data from the main CSV
+for the Bee-AI research survey. It handles:
 
-- Column name mapping and standardization across different source formats
+- Column name mapping and standardization
 - Text normalization and fuzzy matching for duplicate detection
 - ISO code resolution and country/region standardization
 - Data validation and subcategory filtering
-- Merging and deduplication of records from multiple input sources
+- Deduplication of records within the main CSV
 
-The module provides functions to load data from SOURCE_WORKBOOK_PATH, VISUALIZATION_CSV_PATH,
-and MAIN_CSV_PATH, canonicalizing all data to a consistent output schema with standardized columns.
+The module provides functions to load data from MAIN_CSV_PATH, canonicalizing all data to a
+consistent output schema with standardized columns.
 """
 
 import re
 import unicodedata
-from difflib import SequenceMatcher
+import logging
 from pathlib import Path
 
 import pandas as pd
 
 from const import MAIN_CSV_PATH, SOURCE_WORKBOOK_PATH, VISUALIZATION_CSV_PATH
 
-
-SOURCE_SHEET = "Sources"
-REORGANIZE_SHEET = "Re-organize"
-FUZZY_MATCH_THRESHOLD = 0.86
+logger = logging.getLogger(__name__)
 
 OUTPUT_COLUMNS = [
-    "#",
     "title",
     "authors",
     "year",
@@ -56,12 +52,11 @@ OUTPUT_COLUMNS = [
 ]
 
 COLUMN_CANDIDATES = {
-    "#": ["#", "serial", "no"],
     "title": ["title", "papers", "paper"],
     "authors": ["authors", "author"],
     "year": ["year", "publication year"],
-    "subcategory (ai task)": ["subcategory (ai task)", "subcategory", "ai task"],
-    "category (section)": ["category (section)", "category section", "category"],
+    "subcategory (ai task)": ["subcategory (ai task)", "subcategory", "ai task", "category"],
+    "category (section)": ["category (section)", "category section"],
     "approach (ai)": ["approach (ai)", "approach", "ai approach", "method", "methodology"],
     "data modality": ["data modality", "data modality/format", "modality", "data type"],
     "url": ["url", "link", "paper url", "source url"],
@@ -79,7 +74,7 @@ COLUMN_CANDIDATES = {
 }
 
 ALLOWED_SUBCATEGORY_PATTERNS = {
-    "monitoring & health assessment",
+    "monitoring & predictive health analytics",
     "classification",
     "detection",
     "tracking & pose estimation",
@@ -132,7 +127,13 @@ def _find_column(columns, candidates):
     return None
 
 
-def _canonicalize(df):
+def load_csv(csv_path):
+    csv_path = Path(csv_path)
+    if not csv_path.exists():
+        raise FileNotFoundError(f"Input CSV not found: {csv_path}")
+    return pd.read_csv(csv_path, dtype=str).fillna("")
+
+def canonicalize_columns(df):
     out = pd.DataFrame()
     for canonical, candidates in COLUMN_CANDIDATES.items():
         found = _find_column(df.columns, [canonical, *candidates])
@@ -144,18 +145,6 @@ def _canonicalize(df):
     return out[OUTPUT_COLUMNS]
 
 
-def _title_key(value):
-    text = _normalize_text(value).lower()
-    # Expand common abbreviations to normalize variants
-    text = re.sub(r"\bml\b", "machinelearning", text)
-    text = re.sub(r"\bai\b", "artificialintelligence", text)
-    # Remove common extra phrases that may differ between variants
-    text = re.sub(r"recorded\s+inside\s+and\s+outside\s+the\s+beehive\s+an\s+", " ", text)
-    text = re.sub(r"\([^)]*\)|\[[^\]]*\]|\{[^}]*\}", " ", text)
-    text = re.sub(r"[^a-z0-9]+", " ", text)
-    return re.sub(r"\s+", "", text)
-
-
 def _standardize_title(value):
     title = _normalize_text(value)
     if not title:
@@ -164,82 +153,19 @@ def _standardize_title(value):
     return compact
 
 
-def _year_key(value):
-    match = re.search(r"(?:19|20)\d{2}", _normalize_text(value))
-    return match.group(0) if match else ""
+def _paper_label(row):
+    title = _normalize_text(row.get("title"))
+    if title:
+        return title
+    authors = _normalize_text(row.get("authors"))
+    if authors:
+        return f"<untitled; authors={authors}>"
+    return "<untitled>"
 
 
-def _fuzzy_similarity(left_text, right_text):
-    if not left_text or not right_text:
-        return 0.0
-    return SequenceMatcher(None, left_text, right_text).ratio()
-
-
-def _coalesce_rows(primary, secondary):
-    return {
-        col: _normalize_text(primary.get(col, "")) or _normalize_text(secondary.get(col, ""))
-        for col in OUTPUT_COLUMNS
-    }
-
-
-def _merge_primary_reorganize(primary_df, reorg_df):
-    primary = primary_df.copy()
-    reorg = reorg_df.copy()
-
-    primary["__title_key"] = primary["title"].map(_title_key)
-    reorg["__title_key"] = reorg["title"].map(_title_key)
-    primary["__year_key"] = primary["year"].map(_year_key)
-    reorg["__year_key"] = reorg["year"].map(_year_key)
-
-    used_reorg = set()
-    pairs = []
-    unmatched_primary = []
-
-    exact_map = {}
-    for ridx, row in reorg.iterrows():
-        exact_map.setdefault((row["__title_key"], row["__year_key"]), []).append(ridx)
-
-    for sidx, row in primary.iterrows():
-        candidates = exact_map.get((row["__title_key"], row["__year_key"]), [])
-        pick = next((ridx for ridx in candidates if ridx not in used_reorg), None)
-        if pick is None:
-            unmatched_primary.append(sidx)
-        else:
-            used_reorg.add(pick)
-            pairs.append((sidx, pick))
-
-    for sidx in unmatched_primary:
-        src = primary.loc[sidx]
-        best_idx, best_score = None, 0.0
-        for ridx, reg in reorg.iterrows():
-            if ridx in used_reorg:
-                continue
-            if src["__year_key"] and reg["__year_key"] and src["__year_key"] != reg["__year_key"]:
-                continue
-            score = _fuzzy_similarity(src["__title_key"], reg["__title_key"])
-            if score > best_score:
-                best_idx, best_score = ridx, score
-        if best_idx is not None and best_score >= FUZZY_MATCH_THRESHOLD:
-            used_reorg.add(best_idx)
-            pairs.append((sidx, best_idx))
-
-    rows = []
-    matched_primary = {sidx for sidx, _ in pairs}
-
-    for sidx, ridx in pairs:
-        src_row = primary.loc[sidx].to_dict()
-        reg_row = reorg.loc[ridx].to_dict()
-        rows.append(_coalesce_rows(reg_row, src_row))
-
-    for sidx, src in primary.iterrows():
-        if sidx not in matched_primary:
-            rows.append(_coalesce_rows(src.to_dict(), {}))
-
-    for ridx, reg in reorg.iterrows():
-        if ridx not in used_reorg:
-            rows.append(_coalesce_rows(reg.to_dict(), {}))
-
-    return pd.DataFrame(rows)
+def _log_discarded_rows(stage, discarded_rows, reason):
+    for _, row in discarded_rows.iterrows():
+        logger.debug("Discarding paper at %s: %s | %s", stage, _paper_label(row), reason)
 
 
 def _is_fail_value(value):
@@ -252,17 +178,42 @@ def _subcategory_match_key(value):
     return re.sub(r"\s+", " ", text).strip()
 
 
-def _apply_reorganize_rules(df):
+def filter_pass_fail(df):
+    if "pass/fail" not in df.columns:
+        return df.copy()
+    fail_mask = df["pass/fail"].map(_is_fail_value) | df["pass/fail"].isna()
+    _log_discarded_rows("pass/fail", df[fail_mask], "pass/fail is marked as fail")
+    return df[~fail_mask].copy()
+
+
+def filter_subcategories(df):
     if "subcategory (ai task)" not in df.columns:
-        return df
+        return df.copy()
     raw = df["subcategory (ai task)"].map(_normalize_text)
     normalized = raw.map(_subcategory_match_key)
-    return df[
-        normalized.isin(ALLOWED_SUBCATEGORY_PATTERNS)
-        & ~raw.str.match(r"^\s*\[[^\]]+\]\s*", na=False)
-        & ~raw.str.contains(r"\bsurvey\b", case=False, na=False)
-        & ~raw.str.contains(r"\bout\s*of\s*scope\b", case=False, na=False)
-    ].copy()
+    allowed_mask = normalized.isin(ALLOWED_SUBCATEGORY_PATTERNS)
+    bracket_mask = raw.str.match(r"^\s*\[[^\]]+\]\s*", na=False)
+    survey_mask = raw.str.contains(r"\bsurvey\b", case=False, na=False)
+    out_of_scope_mask = raw.str.contains(r"\bout\s*of\s*scope\b", case=False, na=False)
+    keep_mask = allowed_mask & ~bracket_mask & ~survey_mask & ~out_of_scope_mask
+
+    for idx in df.index[~keep_mask]:
+        reasons = []
+        if not allowed_mask.loc[idx]:
+            reasons.append("subcategory is not in the allowed scope")
+        if bracket_mask.loc[idx]:
+            reasons.append("subcategory is bracket-tagged")
+        if survey_mask.loc[idx]:
+            reasons.append("subcategory mentions survey")
+        if out_of_scope_mask.loc[idx]:
+            reasons.append("subcategory is marked out of scope")
+        _log_discarded_rows(
+            "subcategory",
+            df.loc[[idx]],
+            "; ".join(reasons) if reasons else "subcategory did not pass the filter",
+        )
+
+    return df[keep_mask].copy()
 
 
 def _normalize_geo_key(value):
@@ -374,7 +325,7 @@ def _derive_specific_country_iso(row, source_col, lookup, code_to_country):
     return _resolve_country_iso_from_text(row.get(source_col, ""), lookup, code_to_country)
 
 
-def _add_country_iso_columns(df):
+def add_country_iso(df):
     lookup, code_to_country = _load_iso_lookup()
     out = df.copy()
 
@@ -396,6 +347,53 @@ def _add_country_iso_columns(df):
     out["Iso_code"] = out["bee_iso"].where(out["bee_iso"].map(bool), out["research_iso"])
     return out
 
+def _standardize_title(value):
+    title = _normalize_text(value)
+    if not title:
+        return ""
+    compact = re.sub(r"\s+", " ", title).strip()
+    return compact
+
+
+def remove_duplicates(df):
+    if "title" not in df.columns:
+        return df.copy()
+
+    out = df.copy()
+    out["title"] = out["title"].map(_standardize_title)
+
+    merged_rows = []
+    used = set()
+
+    for i, row_a in out.iterrows():
+        if i in used:
+            continue
+        merged = row_a.copy()
+        used.add(i)
+        for j, row_b in out.iterrows():
+            if j <= i or j in used:
+                continue
+            title_a = str(row_a["title"]).lower()
+            title_b = str(row_b["title"]).lower()
+            if title_a and title_b and (title_a in title_b or title_b in title_a):
+                logger.debug(
+                    "Discarding paper during duplicate merge: %s | merged into %s because titles overlap",
+                    _paper_label(row_b),
+                    _paper_label(row_a),
+                )
+                # Keep title A as ground truth
+                for col in out.columns:
+                    if pd.isna(merged[col]) or merged[col] == "":
+                        merged[col] = row_b[col]
+                used.add(j)
+        merged_rows.append(merged)
+
+    return pd.DataFrame(merged_rows).reset_index(drop=True)
+
+def sort(df, sort_by_number=False):
+    out = df.copy()
+    return out.sort_values(by="title", key=lambda s: s.str.lower())
+
 
 def _finalize(df, sort_by_number):
     required = {"title", "authors"}
@@ -404,22 +402,36 @@ def _finalize(df, sort_by_number):
         raise ValueError(f"Missing required columns: {missing}")
 
     out = df.copy()
-    out = out[out["title"].map(bool) & out["authors"].map(bool)]
-    out = out[~out["pass/fail"].map(_is_fail_value)]
-    out = _apply_reorganize_rules(out)
-    out["title"] = out["title"].map(_standardize_title)
-    out = out.drop_duplicates(subset=["title"], keep="first")
-    out = _add_country_iso_columns(out)
+    counts = {"start": len(out)}
 
-    if sort_by_number:
-        out = out.sort_values(by="#", key=lambda s: pd.to_numeric(s, errors="coerce"), na_position="last")
-    else:
-        out = out.sort_values(by="title", key=lambda s: s.str.lower())
+    out = filter_pass_fail(out)
+    counts["after_pass_fail"] = len(out)
+
+    out = filter_subcategories(out)
+    counts["after_subcategory"] = len(out)
+
+    missing_title_or_authors = out[~(out["title"].map(bool) & out["authors"].map(bool))]
+    _log_discarded_rows("required fields", missing_title_or_authors, "missing title or authors")
+    out = out[out["title"].map(bool) & out["authors"].map(bool)]
+    counts["after_title_authors"] = len(out)
+
+    out = remove_duplicates(out)
+    counts["after_dedup"] = len(out)
+
+    out = add_country_iso(out)
+    out = sort(out, sort_by_number=sort_by_number)
 
     out = out.reset_index(drop=True)
     out = out[OUTPUT_COLUMNS]
-    return out.rename(columns={col: col[:1].upper() + col[1:] for col in out.columns})
 
+    logger.info("Row counts by stage: %s", counts)
+    print("Row counts by stage:")
+    prev = counts["start"]
+    for stage, n in counts.items():
+        print(f"  {stage}: {n} (dropped {prev - n})")
+        prev = n
+
+    return out.rename(columns={col: col[:1].upper() + col[1:] for col in out.columns})
 
 def _write_visualization_csv(df, output_path):
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -427,53 +439,20 @@ def _write_visualization_csv(df, output_path):
     return output_path
 
 
-def build_visualization_csv_from_workbook(input_path=SOURCE_WORKBOOK_PATH, output_path=VISUALIZATION_CSV_PATH):
-    input_path = Path(input_path)
-    output_path = Path(output_path)
-    if not input_path.exists():
-        raise FileNotFoundError(f"Input workbook not found: {input_path}")
-
-    xl = pd.ExcelFile(input_path)
-    missing = [sheet for sheet in (SOURCE_SHEET, REORGANIZE_SHEET) if sheet not in xl.sheet_names]
-    if missing:
-        raise ValueError(f"Missing required sheets in workbook: {missing}")
-
-    if Path(MAIN_CSV_PATH).exists():
-        primary = _canonicalize(pd.read_csv(MAIN_CSV_PATH, dtype=str).fillna(""))
-    else:
-        primary = _canonicalize(pd.read_excel(input_path, sheet_name=SOURCE_SHEET, dtype=str).fillna(""))
-
-    reorg = _canonicalize(pd.read_excel(input_path, sheet_name=REORGANIZE_SHEET, dtype=str).fillna(""))
-    merged = _merge_primary_reorganize(primary, reorg)
-    final = _finalize(merged, sort_by_number=True)
-    return _write_visualization_csv(final, output_path)
-
-
 def build_visualization_csv_from_main_csv(main_csv_path=MAIN_CSV_PATH, output_path=VISUALIZATION_CSV_PATH):
-    main_csv_path = Path(main_csv_path)
-    output_path = Path(output_path)
-    if not main_csv_path.exists():
-        raise FileNotFoundError(f"Input CSV not found: {main_csv_path}")
-
-    main_df = _canonicalize(pd.read_csv(main_csv_path, dtype=str).fillna(""))
+    main_df = canonicalize_columns(load_csv(main_csv_path))
     final = _finalize(main_df, sort_by_number=False)
-    return _write_visualization_csv(final, output_path)
+    return _write_visualization_csv(final, Path(output_path))
 
 
 class LiteratureDataset:
-    def __init__(self, csv_path=VISUALIZATION_CSV_PATH):
+    def __init__(self, main_csv_path=MAIN_CSV_PATH, csv_path=VISUALIZATION_CSV_PATH):
+        self.main_csv_path = Path(main_csv_path)
         self.csv_path = Path(csv_path)
         self.df = None
 
     def ensure_dataset(self):
-        if Path(SOURCE_WORKBOOK_PATH).exists():
-            build_visualization_csv_from_workbook(input_path=SOURCE_WORKBOOK_PATH, output_path=self.csv_path)
-        elif Path(MAIN_CSV_PATH).exists():
-            build_visualization_csv_from_main_csv(main_csv_path=MAIN_CSV_PATH, output_path=self.csv_path)
-        else:
-            raise FileNotFoundError(
-                f"Could not build dataset. Missing both workbook '{SOURCE_WORKBOOK_PATH}' and CSV '{MAIN_CSV_PATH}'."
-            )
+        build_visualization_csv_from_main_csv(main_csv_path=self.main_csv_path, output_path=self.csv_path)
 
     def load(self):
         self.ensure_dataset()

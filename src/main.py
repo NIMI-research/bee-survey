@@ -11,6 +11,7 @@ from visualization.bee_demographic_bar import plot_bar_bee_demographic
 from visualization.demographic_migrations import plot_circular_migration_bee_research
 ###Configure logging
 logging.basicConfig(
+
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
@@ -20,22 +21,24 @@ def main():
     dataset = LiteratureDataset()
     df = dataset.load()
     logger.info(f"Dataset loaded successfully with {len(df)} records")
+    print("total records:", len(df))
 
-    logger.info("Generating: Yearly Category Pies")
-    plot_yearly_category_pies(df)
+
     logger.info("Generating: Count Category Over Years")
     count_category_over_years(df)
-    logger.info("Generating: Modality Approach Category Sankey")
-    plot_modality_approach_category_sankey(df)
+    logger.info("Generating: Ridge Plot - Approaches Over Years")
+    ridge_plot_approaches_over_years(df)
     logger.info("Generating: Choropleth Country")
     plot_choropleth_country(df)
     logger.info("Generating: Bar Plot - Bee Demographic")
     plot_bar_bee_demographic(df)
+    logger.info("Generating: Modality Approach Category Sankey")
+    plot_modality_approach_category_sankey(df)
+    logger.info("Generating: Yearly Category Pies")
+    plot_yearly_category_pies(df)
     logger.info("Generating: Circular Migration - Bee to Research")
     plot_circular_migration_bee_research(df)
-    logger.info("Generating: Ridge Plot - Approaches Over Years")
-    ridge_plot_approaches_over_years(df)
-    
+
 
 if __name__ == "__main__":
     main()

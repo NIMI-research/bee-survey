@@ -1,6 +1,6 @@
 import pandas as pd
 import plotly.graph_objects as go
-from const import SECONDARY_PALETTE, OUTPUT_DIR, SECONDARY_PALETTE
+from const import SECONDARY_PALETTE, OUTPUT_DIR
 from utils import apply_legend_border, save_with_plot_border
 
 
@@ -18,32 +18,27 @@ def _clip_approach_text(text, max_words=5):
 
 def ridge_plot_approaches_over_years(df):
     df = df.copy()
-
-    # Clean columns
     df = df.dropna(subset=["Approach group"])
     df["Approach group"] = df["Approach group"].astype(str).str.strip()
-    df["Approach group"] = df["Approach group"].map(lambda x: _clip_approach_text(x))
+    df["Approach group"] = df["Approach group"].map(_clip_approach_text)
     df["Year"] = pd.to_numeric(df["Year"], errors="coerce")
     df = df.dropna(subset=["Year"])
     df["Year"] = df["Year"].astype(int)
 
-    if df.empty:
-        return
-
-    # Aggregate counts per approach per year
     data = df.groupby(["Approach group", "Year"]).size().reset_index(name="count")
-
     years = sorted(data["Year"].unique())
 
+    # Sort approaches in increasing order (oldest/simplest -> newest), bottom to top
     approach_order = (
         data.groupby("Approach group", as_index=False)
         .agg(latest_year=("Year", "max"))
-        .sort_values(["latest_year", "Approach group"], ascending=[False, True])
+        .sort_values(["latest_year", "Approach group"], ascending=[True, True])
     )
     approaches = approach_order["Approach group"].tolist()
-
     n_approaches = len(approaches)
-    spacing = 1.0  # vertical spacing between ridges
+
+    spacing = 0.75       # tighter than before -> ridges sit closer together
+    peak_height = 1.15   # taller than spacing -> peaks poke into the ridge above (the overlap look)
 
     fig = go.Figure()
 
@@ -53,16 +48,14 @@ def ridge_plot_approaches_over_years(df):
             .set_index("Year")["count"]
             .reindex(years, fill_value=0)
         )
-
         y_offset = idx * spacing
         color = SECONDARY_PALETTE[idx % len(SECONDARY_PALETTE)]
 
         y_values = cat_data.values.astype(float)
-        # Normalize within each ridge so they visually fit within spacing
-        y_max = y_values.max() if y_values.max() > 0 else 1
-        y_scaled = y_values / y_max * (spacing * 0.85)
+        y_max_val = y_values.max() if y_values.max() > 0 else 1
+        y_scaled = y_values / y_max_val * (spacing * peak_height)
 
-        # Filled area (ridge)
+        # Filled ridge — translucent so overlaps with the ridge below stay legible
         fig.add_trace(
             go.Scatter(
                 x=list(years) + list(years)[::-1],
@@ -70,25 +63,25 @@ def ridge_plot_approaches_over_years(df):
                 fill="toself",
                 fillcolor=color,
                 line=dict(color=color, width=1.5, shape="spline", smoothing=0.75),
-                opacity=0.6,
+                opacity=0.55,
                 name=approach,
-                showlegend=True,
+                showlegend=False,
             )
         )
-
-        # Top line for clarity
+        # Crisp top outline
         fig.add_trace(
             go.Scatter(
                 x=years,
                 y=list(y_scaled + y_offset),
                 mode="lines",
-                line=dict(color=color, width=2),
+                line=dict(color=color, width=2, shape="spline", smoothing=0.75),
                 showlegend=False,
                 hoverinfo="skip",
             )
         )
 
-    # Y-axis tick labels centered on each ridge
+    tickvals = [i * spacing for i in range(n_approaches)]
+
     fig.update_layout(
         template="plotly_white",
         title=dict(
@@ -97,10 +90,9 @@ def ridge_plot_approaches_over_years(df):
         ),
         paper_bgcolor="white",
         plot_bgcolor="white",
-        height=200 + n_approaches * 60,
+        height=180 + n_approaches * 55,
         width=1500,
         xaxis=dict(
-            # title="<b>Year</b>",
             showgrid=False,
             tickfont=dict(size=18, family="Arial Black"),
             tickmode="array",
@@ -108,17 +100,28 @@ def ridge_plot_approaches_over_years(df):
             ticktext=[str(y) for y in years],
         ),
         yaxis=dict(
-            # title="<b>Approach Group</b>",
+            title=dict(text="Approach Group", font=dict(size=18, family="Arial Black")),
             autorange="min",
             tickmode="array",
-            tickvals=[i * spacing + spacing * 0.4 for i in range(n_approaches)],
+            tickvals=tickvals,
             ticktext=approaches,
             showgrid=False,
             ticklabelstandoff=18,
-            tickfont=dict(size=20),
+            tickfont=dict(size=16),
+            side="left",
+        ),
+        yaxis2=dict(
+            overlaying="y",
+            side="right",
+            tickmode="array",
+            tickvals=tickvals,
+            ticktext=approaches,
+            tickfont=dict(size=16),
+            showgrid=False,
+            matches="y",
         ),
         showlegend=False,
-        margin=dict(t=100, b=80, l=200, r=50),
+        margin=dict(t=100, b=80, l=220, r=220),
         xaxis_showline=True,
         xaxis_linewidth=2,
         xaxis_linecolor="black",
@@ -127,7 +130,6 @@ def ridge_plot_approaches_over_years(df):
     apply_legend_border(fig)
     save_with_plot_border(
         fig,
-        png_path=OUTPUT_DIR / "ridge_approaches_over_years.png",
-        pdf_path=OUTPUT_DIR / "ridge_approaches_over_years.pdf",
+        png_path=OUTPUT_DIR / "joyplot_approaches_over_years.png",
+        pdf_path=OUTPUT_DIR / "joyplot_approaches_over_years.pdf",
     )
-
